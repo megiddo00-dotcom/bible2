@@ -467,10 +467,10 @@ nav.tabbar{
           <button class="time-chip" data-v="nt">신약 먼저</button>
         </div>
         <div class="plan-grid" style="margin-top:12px">
-          <label><span id="planMidLabel">구약 만료일</span> <input type="date" id="planMid"></label>
-          <button class="btn-outline" id="planMidAuto" style="align-self:end">자동 배분</button>
+          <label><span id="planMidLabel">구약 만료일 (선택)</span> <input type="date" id="planMid"></label>
+          <button class="btn-outline" id="planMidAuto" style="align-self:end">지정 해제</button>
         </div>
-        <div class="set-desc">만료일을 조정하면 나머지 분량은 최종 만료일에 맞춰 자동 조절됩니다.</div>
+        <div class="set-desc">평소에는 비워두세요 — 전체 기간에 연속으로 균등 배분됩니다.<br>읽기가 밀려 목표가 필요할 때만 날짜를 지정하면, 그날까지 1단계를 마치도록 재배분되고 나머지는 최종 만료일에 맞춰 자동 조절됩니다.</div>
         <div class="set-desc" style="margin-top:12px;font-weight:700;color:var(--ink)">일정에 포함할 날</div>
         <div class="time-chips" id="planDays">
           <button class="time-chip" data-v="sat">토요일</button>
@@ -842,55 +842,64 @@ const OT_CHARS=OT_LIST.reduce((s,c)=>s+c.chars,0);
 
 let SCHEDULE=[], SCHED_BY_KEY={}, FIRST_CHARS=OT_CHARS, PHASE_INFO=null;
 
-// 1단계 만료일 자동 계산: 글자수 비례로 읽기일을 나눔
-function autoMidKey(){
-  const dates=readingDates(parseKey(PLAN.start), parseKey(PLAN.end));
-  if(dates.length<2) return PLAN.end;
-  const firstChars=(PLAN.order==="ot"?OT_CHARS:TOTAL_CHARS-OT_CHARS);
-  let n=Math.round(dates.length*firstChars/TOTAL_CHARS);
-  n=Math.max(1,Math.min(dates.length-1,n));
-  return dateKey(dates[n-1]);
-}
-
 function rebuildSchedule(){
   PLAN=getPlan();
   const start=parseKey(PLAN.start), end=parseKey(PLAN.end);
-  const midKey=PLAN.mid || autoMidKey();
-  let mid=parseKey(midKey);
-  if(mid<start) mid=start;
-  if(mid>end) mid=end;
-
   const firstList = PLAN.order==="ot" ? OT_LIST : NT_LIST;
   const secondList= PLAN.order==="ot" ? NT_LIST : OT_LIST;
   FIRST_CHARS=firstList.reduce((s,c)=>s+c.chars,0);
-
-  let d1=readingDates(start,mid);
-  let d2=readingDates(addDays(mid,1),end);
-  // 각 단계 최소 1일 보장
-  if(!d1.length && d2.length){ d1=[d2[0]]; d2=d2.slice(1); }
-  if(!d2.length && d1.length>1){ d2=[d1[d1.length-1]]; d1=d1.slice(0,-1); }
-  if(!d1.length||!d2.length){ SCHEDULE=[]; SCHED_BY_KEY={}; PHASE_INFO=null; return false; }
+  const firstTe=firstList[0].testament;
 
   SCHEDULE=[];
-  assignDays(firstList,d1.length).forEach((idxs,i)=>{
-    const chs=idxs.map(x=>firstList[x]);
-    SCHEDULE.push({date:d1[i],testament:firstList[0].testament,chapters:chs,
-      verses:chs.reduce((s,c)=>s+c.verses,0),chars:chs.reduce((s,c)=>s+c.chars,0)});
-  });
-  assignDays(secondList,d2.length).forEach((idxs,i)=>{
-    const chs=idxs.map(x=>secondList[x]);
-    SCHEDULE.push({date:d2[i],testament:secondList[0].testament,chapters:chs,
-      verses:chs.reduce((s,c)=>s+c.verses,0),chars:chs.reduce((s,c)=>s+c.chars,0)});
-  });
+  let firstEndDate=null, firstDays=0;
+
+  if(!PLAN.mid){
+    // 중간 목표 없음: 전체 기간에 연속 균등 배분
+    const dates=readingDates(start,end);
+    if(dates.length<2){ SCHEDULE=[]; SCHED_BY_KEY={}; PHASE_INFO=null; return false; }
+    const full=[...firstList,...secondList];
+    assignDays(full,dates.length).forEach((idxs,i)=>{
+      const chs=idxs.map(x=>full[x]);
+      SCHEDULE.push({date:dates[i],testament:chs[0].testament,chapters:chs,
+        verses:chs.reduce((s,c)=>s+c.verses,0),chars:chs.reduce((s,c)=>s+c.chars,0)});
+    });
+    // 1단계(첫 언약)가 끝나는 날 탐지 (표시용)
+    SCHEDULE.forEach((s,i)=>{
+      if(s.chapters.some(c=>c.testament===firstTe)){ firstEndDate=s.date; firstDays=i+1; }
+    });
+  } else {
+    // 중간 목표 지정: 그 날짜까지 1단계 강제 완료
+    let mid=parseKey(PLAN.mid);
+    if(mid<start) mid=start;
+    if(mid>end) mid=end;
+    let d1=readingDates(start,mid);
+    let d2=readingDates(addDays(mid,1),end);
+    if(!d1.length && d2.length){ d1=[d2[0]]; d2=d2.slice(1); }
+    if(!d2.length && d1.length>1){ d2=[d1[d1.length-1]]; d1=d1.slice(0,-1); }
+    if(!d1.length||!d2.length){ SCHEDULE=[]; SCHED_BY_KEY={}; PHASE_INFO=null; return false; }
+    assignDays(firstList,d1.length).forEach((idxs,i)=>{
+      const chs=idxs.map(x=>firstList[x]);
+      SCHEDULE.push({date:d1[i],testament:chs[0].testament,chapters:chs,
+        verses:chs.reduce((s,c)=>s+c.verses,0),chars:chs.reduce((s,c)=>s+c.chars,0)});
+    });
+    assignDays(secondList,d2.length).forEach((idxs,i)=>{
+      const chs=idxs.map(x=>secondList[x]);
+      SCHEDULE.push({date:d2[i],testament:chs[0].testament,chapters:chs,
+        verses:chs.reduce((s,c)=>s+c.verses,0),chars:chs.reduce((s,c)=>s+c.chars,0)});
+    });
+    firstEndDate=d1[d1.length-1]; firstDays=d1.length;
+  }
+
   SCHEDULE.forEach((s,i)=>{ s.key=dateKey(s.date); s.index=i; });
   SCHED_BY_KEY={};
   SCHEDULE.forEach(s=>{ SCHED_BY_KEY[s.key]=s; });
   PHASE_INFO={
     firstName: PLAN.order==="ot"?"구약":"신약",
     secondName: PLAN.order==="ot"?"신약":"구약",
-    firstEnd: d1[d1.length-1], finalEnd: d2[d2.length-1],
-    firstDays: d1.length, secondDays: d2.length,
-    midKey: dateKey(d1[d1.length-1])
+    firstEnd: firstEndDate, finalEnd: SCHEDULE[SCHEDULE.length-1].date,
+    firstDays: firstDays, secondDays: SCHEDULE.length-firstDays,
+    midKey: dateKey(firstEndDate),
+    forced: !!PLAN.mid
   };
   const ticks=document.getElementById("journeyTicks");
   if(ticks){ ticks.innerHTML=""; delete ticks.dataset.built; }
@@ -1645,14 +1654,14 @@ function renderPlanUI(){
   const p=getPlan();
   $("planStart").value=p.start;
   $("planEnd").value=p.end;
-  $("planMid").value=p.mid || (PHASE_INFO?PHASE_INFO.midKey:"");
+  $("planMid").value=p.mid || "";
   $("planMidLabel").textContent=(p.order==="ot"?"구약":"신약")+" 만료일";
   document.querySelectorAll("#planOrder .time-chip").forEach(b=>b.classList.toggle("on",b.dataset.v===p.order));
   document.querySelectorAll("#planDays .time-chip").forEach(b=>b.classList.toggle("on",!!p[b.dataset.v]));
   if(PHASE_INFO){
     $("planSummary").innerHTML=
       `현재 일정: ${PHASE_INFO.firstName} ${PHASE_INFO.firstDays}일 → ${PHASE_INFO.secondName} ${PHASE_INFO.secondDays}일 · 총 읽는 날 ${SCHEDULE.length}일<br>`+
-      `하루 평균 약 ${Math.round(TOTAL_CHARS/SCHEDULE.length).toLocaleString()}자`;
+      `${PHASE_INFO.firstName} 종료 예정 ${PHASE_INFO.midKey} ${PHASE_INFO.forced?"<b>(목표 지정됨)</b>":"(자동)"} · 하루 평균 약 ${Math.round(TOTAL_CHARS/SCHEDULE.length).toLocaleString()}자`;
   } else {
     $("planSummary").textContent="⚠ 기간이 너무 짧습니다. 날짜를 다시 설정해 주세요.";
   }
@@ -1690,7 +1699,7 @@ document.querySelectorAll("#planOrder .time-chip").forEach(b=>{
 document.querySelectorAll("#planDays .time-chip").forEach(b=>{
   b.onclick=()=>b.classList.toggle("on");
 });
-$("planMidAuto").onclick=()=>{ $("planMid").value=""; toast("적용 시 글자수 비례로 자동 배분됩니다"); };
+$("planMidAuto").onclick=()=>{ $("planMid").value=""; toast("적용 시 중간 목표 없이 연속 배분됩니다"); };
 $("planApply").onclick=async()=>{
   const p=getPlan();
   const ns=$("planStart").value, ne=$("planEnd").value, nm=$("planMid").value;
