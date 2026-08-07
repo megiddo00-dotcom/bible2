@@ -84,7 +84,9 @@
 ## 데이터·저장
 
 - 계획 btr2-plan / 기록 btr2-read / 해제표식 btr2-del / 설정 btr2-set /
-  배지 btr2-badges / 공휴일 btr2-hol·btr2-holedit — 기기에만 저장
-- 동기화: 본인 GitHub 비공개 Gist의 btr2.json
+  배지 btr2-badges / 공휴일 btr2-hol·btr2-holedit — 기본은 기기 저장
+- **동기화를 켜면** 기록·배지·계획이 본인 GitHub 비공개 Gist(btr2.json)를 통해
+  다른 기기와 공유됨 (그 외 서버 전송 없음). 낭독 음원·쉬운성경·공휴일 캐시는
+  동기화 대상이 아니며 기기에만 저장
 - 개역한글판은 공개 본문 / **쉬운성경은 저작권 보호 대상** — 기기 가져오기 전용,
   저장소·Gist에 올리지 않음
