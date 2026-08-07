@@ -236,6 +236,48 @@ main{max-width:560px;margin:-34px auto 0;padding:0 14px;position:relative}
 .nt-phase-ui .btn-jump-today{background:var(--nt)}
 .btn-jump-today:active{transform:scale(.96)}
 /* ---------- 설정 탭 ---------- */
+.sec-title{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--serif);font-weight:700;font-size:1.02rem;
+  margin:22px 6px 10px;color:var(--ink);
+}
+.sec-title::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--ot)}
+.nt-phase-ui .sec-title::before{background:var(--nt)}
+.sec-title:first-child{margin-top:4px}
+/* 나의 기록 */
+.level-row{display:flex;align-items:baseline;gap:10px}
+.level-num{font-family:var(--serif);font-weight:700;font-size:1.6rem;color:var(--gold)}
+.level-sub{font-size:.78rem;color:var(--ink-soft)}
+.level-bar{height:9px;border-radius:5px;background:#EFF2EE;overflow:hidden;margin-top:8px}
+.level-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#E8C766,#C9A227);transition:width .5s}
+.record-stats{display:flex;gap:10px;margin-top:14px}
+.record-stat{flex:1;text-align:center;background:#FBFCFA;border:1px solid var(--line);border-radius:14px;padding:11px 6px}
+.record-stat b{font-family:var(--serif);font-size:1.08rem;display:block}
+.record-stat span{font-size:.7rem;color:var(--ink-soft)}
+.badge-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.badge-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--gold-soft);border:1px solid #E6D5A8;color:#7A5E1A;
+  border-radius:20px;padding:6px 12px;font-size:.78rem;font-weight:700;
+}
+/* 성취 축하 오버레이 */
+.award{
+  position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
+  background:rgba(27,36,32,.55);backdrop-filter:blur(3px);
+}
+.award[hidden]{display:none}
+.award-card{
+  background:var(--card);border-radius:24px;padding:34px 30px 26px;text-align:center;
+  max-width:320px;width:85%;box-shadow:0 12px 40px rgba(0,0,0,.3);
+  animation:pop .45s ease;
+}
+.award-icon{font-size:3.4rem;line-height:1}
+.award-name{font-family:var(--serif);font-weight:700;font-size:1.3rem;margin-top:12px}
+.award-desc{font-size:.85rem;color:var(--ink-soft);margin-top:6px;line-height:1.55}
+.award-btn{
+  margin-top:20px;border:none;background:var(--gold);color:#fff;font-weight:700;
+  font-size:.95rem;border-radius:14px;padding:12px 34px;cursor:pointer;font-family:var(--sans);
+}
 .set-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
 .set-row:last-child{border-bottom:none}
 .set-title{font-weight:500;font-size:.95rem}
@@ -453,9 +495,9 @@ nav.tabbar{
 
   <!-- 설정 탭 -->
   <section class="tab-page" id="page-settings">
+    <div class="sec-title">📅 통독 일정</div>
     <div class="card">
       <div class="set-row" style="display:block;border-bottom:none;padding-top:4px">
-        <div class="set-title">📅 통독 일정 설정</div>
         <div class="set-desc" style="margin-bottom:12px">일정을 바꿔도 장별 읽기 기록은 유지됩니다.</div>
         <div class="plan-grid">
           <label>시작일 <input type="date" id="planStart"></label>
@@ -499,9 +541,10 @@ nav.tabbar{
         <div class="time-chips" id="holEditList"></div>
       </div>
     </div>
+    <div class="sec-title">🔔 알림</div>
     <div class="card">
-      <div class="set-row" style="display:block">
-        <div class="set-title">🔔 저녁 알림</div>
+      <div class="set-row" style="display:block;border-bottom:1px solid var(--line)">
+        <div class="set-title">읽기 알림</div>
         <div class="set-desc">선택한 시간에 오늘 분량이 남아 있으면 알림을 보냅니다.<br>알림을 받으려면 먼저 권한을 허용해 주세요.</div>
         <div style="margin-top:12px">
           <button class="btn-primary" id="btnNotiPerm">알림 권한 허용</button>
@@ -509,13 +552,6 @@ nav.tabbar{
         <div class="set-desc" style="margin-top:14px">알림 받을 시간 (여러 개 선택 가능)</div>
         <div class="time-chips" id="timeChips"></div>
         <div class="noti-status" id="notiStatus"></div>
-      </div>
-      <div class="set-row">
-        <div>
-          <div class="set-title">홈 화면에 설치</div>
-          <div class="set-desc">앱처럼 사용하고 알림을 더 안정적으로 받을 수 있어요</div>
-        </div>
-        <button class="btn-primary" id="btnInstall" style="display:none">설치</button>
       </div>
       <div class="set-row">
         <div>
@@ -532,8 +568,11 @@ nav.tabbar{
           ③ 방해금지 모드가 켜져 있으면 팝업이 표시되지 않습니다
         </div>
       </div>
-      <div class="set-row" style="display:block">
-        <div class="set-title">🎧 낭독 음원 관리</div>
+    </div>
+    <div class="sec-title">🎧 낭독 음원</div>
+    <div class="card">
+      <div class="set-row" style="display:block;border-bottom:none">
+        <div class="set-title">음원을 휴대폰에 저장</div>
         <div class="set-desc">
           MP3 낭독 파일을 휴대폰에 저장해두면 인터넷 없이 재생됩니다.<br>
           PC에서 생성한 audio 폴더의 mp3 파일들을 폰으로 복사한 뒤, 아래 버튼으로 전체 선택해서 가져오세요.
@@ -546,6 +585,27 @@ nav.tabbar{
         <div class="set-desc" id="audioStatus" style="margin-top:10px"></div>
         <input type="file" id="fileImportF" accept=".mp3,audio/mpeg" multiple hidden>
         <input type="file" id="fileImportM" accept=".mp3,audio/mpeg" multiple hidden>
+      </div>
+    </div>
+    <div class="sec-title">🏆 나의 기록</div>
+    <div class="card">
+      <div class="level-row"><span class="level-num" id="recLevel">Lv.1</span><span class="level-sub" id="recLevelSub"></span></div>
+      <div class="level-bar"><div class="level-fill" id="recLevelFill" style="width:0%"></div></div>
+      <div class="record-stats">
+        <div class="record-stat"><b id="recStreak">0일</b><span>연속 완료 🔥</span></div>
+        <div class="record-stat"><b id="recBest">0일</b><span>최고 기록</span></div>
+        <div class="record-stat"><b id="recBooks">0/66</b><span>완독한 책</span></div>
+      </div>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </div>
+    <div class="sec-title">🗂 데이터</div>
+    <div class="card">
+      <div class="set-row">
+        <div>
+          <div class="set-title">홈 화면에 설치</div>
+          <div class="set-desc">앱처럼 사용하고 알림을 더 안정적으로 받을 수 있어요</div>
+        </div>
+        <button class="btn-primary" id="btnInstall" style="display:none">설치</button>
       </div>
       <div class="set-row">
         <div>
@@ -575,11 +635,20 @@ nav.tabbar{
     전체 일정
   </button>
   <button class="tab-btn" data-tab="settings">
-    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-    알림 설정
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    설정
   </button>
 </nav>
 
+
+<div class="award" id="award" hidden>
+  <div class="award-card">
+    <div class="award-icon" id="awardIcon">🏆</div>
+    <div class="award-name" id="awardName"></div>
+    <div class="award-desc" id="awardDesc"></div>
+    <button class="award-btn" id="awardBtn">계속하기</button>
+  </div>
+</div>
 
 <div class="reader" id="reader" hidden>
   <div class="reader-head">
@@ -1076,10 +1145,8 @@ function render(){
       setRead(c,!isRead(c));
       render();
       syncToSW();
-      if(!was && dayDone(sch)){
-        toast("🎉 오늘 분량을 모두 읽었습니다!");
-        if(navigator.vibrate) navigator.vibrate([60,40,60]);
-      }
+      if(!was && dayDone(sch)) celebrateDayComplete();
+      checkAchievements();
     };
     item.addEventListener("click",toggle);
     item.addEventListener("keydown",e=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle(e);} });
@@ -1223,7 +1290,8 @@ $("btnCheckAll").onclick=()=>{
   const target=!dayDone(sch);
   sch.chapters.forEach(c=>setRead(c,target));
   render(); syncToSW();
-  if(target) toast("🎉 오늘 분량을 모두 읽었습니다!");
+  if(target) celebrateDayComplete();
+  checkAchievements();
 };
 $("btnReset").onclick=()=>{
   if(confirm("모든 읽기 기록을 삭제할까요? 되돌릴 수 없습니다.")){
@@ -1236,6 +1304,178 @@ $("btnReset").onclick=()=>{
 function toast(msg){
   const t=$("toast"); t.textContent=msg; t.classList.add("show");
   clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),2500);
+}
+
+/* ============================================================
+   폭죽 축하 효과 (라이브러리 없이 캔버스)
+============================================================ */
+function fireConfetti(opts){
+  const dur=(opts&&opts.duration)||1800;
+  const cv=document.createElement("canvas");
+  cv.style.cssText="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:400";
+  cv.width=innerWidth; cv.height=innerHeight;
+  document.body.appendChild(cv);
+  const ctx=cv.getContext("2d");
+  const colors=["#C9A227","#E8C766","#1F5C46","#2E4A72","#D96C4F","#F6EED9"];
+  const ps=[];
+  for(let i=0;i<130;i++){
+    const side=Math.random()<.5;
+    ps.push({
+      x: side? innerWidth*0.12 : innerWidth*0.88,
+      y: innerHeight*0.75,
+      vx:(side?1:-1)*(2+Math.random()*5)*(0.6+Math.random()),
+      vy:-(8+Math.random()*7),
+      g:0.25+Math.random()*0.12,
+      w:5+Math.random()*6, h:3+Math.random()*5,
+      rot:Math.random()*Math.PI, vr:(Math.random()-.5)*0.3,
+      c:colors[i%colors.length]
+    });
+  }
+  const t0=performance.now();
+  (function frame(t){
+    const el=t-t0;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{
+      p.x+=p.vx; p.vy+=p.g; p.y+=p.vy; p.rot+=p.vr; p.vx*=0.99;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha=Math.max(0,1-el/dur);
+      ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+    });
+    if(el<dur) requestAnimationFrame(frame);
+    else cv.remove();
+  })(t0);
+}
+
+const CHEERS=["오늘도 해냈어요! 🎉","말씀과 함께한 하루! ✨","꾸준함이 빛나요! 🌟","한 걸음 더 가까워졌어요! 📖","오늘 분량 완료! 대단해요! 👏"];
+function celebrateDayComplete(){
+  toast(CHEERS[Math.floor(Math.random()*CHEERS.length)]);
+  if(navigator.vibrate) navigator.vibrate([60,40,60]);
+  fireConfetti();
+}
+
+/* ============================================================
+   성취 시스템: 레벨 · 연속 기록 · 배지
+============================================================ */
+const LEVEL_STEP=60000;   // 6만 자마다 레벨 업
+function totalReadChars(){ let s=0; ALL.forEach(c=>{ if(isRead(c)) s+=c.chars; }); return s; }
+function currentLevel(chars){ return 1+Math.floor(chars/LEVEL_STEP); }
+
+function streaks(){
+  // 오늘까지의 읽는 날 기준 연속 완료 / 역대 최고 연속
+  const t=todayDate();
+  let cur=0, best=0, run=0, lastRelevant=-1;
+  SCHEDULE.forEach((s,i)=>{ if(s.date<=t) lastRelevant=i; });
+  for(let i=0;i<=lastRelevant;i++){
+    if(dayDone(SCHEDULE[i])){ run++; best=Math.max(best,run); }
+    else run=0;
+  }
+  // 현재 연속: 뒤에서부터 (오늘이 미완료여도 진행 중이면 어제까지로 계산)
+  for(let i=lastRelevant;i>=0;i--){
+    if(dayDone(SCHEDULE[i])) cur++;
+    else{
+      if(i===lastRelevant && dateKey(SCHEDULE[i].date)===dateKey(t)) continue; // 오늘은 아직 진행 중
+      break;
+    }
+  }
+  return {cur,best};
+}
+
+function computeBadges(){
+  const out=[];
+  const pct=totalReadChars()/TOTAL_CHARS*100;
+  // 책 완독
+  [...BIBLE.ot,...BIBLE.nt].forEach(([name,id,vv])=>{
+    const done=vv.every((_,i)=>store.read[id+"-"+(i+1)]);
+    out.push({id:"book-"+id, icon:"📖", name:name+" 완독", desc:name+" 전체 "+vv.length+"장을 읽었습니다", earned:done});
+  });
+  // 진행률 마일스톤
+  [[10,"🌱","여정의 시작","전체 10%를 읽었습니다"],
+   [25,"🌿","순항 중","전체 25%를 읽었습니다"],
+   [50,"🌳","절반의 완주","전체 50%를 읽었습니다"],
+   [75,"⛰️","고지가 눈앞에","전체 75%를 읽었습니다"],
+   [100,"👑","성경 1독 완주!","창세기부터 계시록까지 모두 읽었습니다"]].forEach(([p,ic,nm,ds])=>{
+    out.push({id:"mile-"+p, icon:ic, name:nm, desc:ds, earned:pct>=p});
+  });
+  // 연속 기록
+  const st=streaks();
+  out.push({id:"streak-7",  icon:"🔥", name:"7일 연속", desc:"읽는 날 7일 연속으로 완료했습니다", earned:st.best>=7});
+  out.push({id:"streak-30", icon:"💎", name:"30일 연속", desc:"읽는 날 30일 연속으로 완료했습니다", earned:st.best>=30});
+  // 월 개근: 그 달의 읽는 날을 모두 완료 (달이 끝났거나 마지막 읽는 날까지 완료)
+  const t=todayDate();
+  const months={};
+  SCHEDULE.forEach(s=>{
+    const mk=s.key.slice(0,7);
+    (months[mk]=months[mk]||[]).push(s);
+  });
+  Object.entries(months).forEach(([mk,days])=>{
+    const allDone=days.every(dayDone);
+    const monthOver = days[days.length-1].date<=t;
+    if(days.length>=5){ // 며칠짜리 자투리 달은 제외
+      out.push({id:"month-"+mk, icon:"🗓️", name:mk.slice(0,4)+"년 "+(+mk.slice(5))+"월 개근",
+        desc:"그 달의 읽기 일정을 하루도 빠짐없이 완료했습니다", earned:allDone&&monthOver});
+    }
+  });
+  return out;
+}
+
+function earnedIds(){ try{return JSON.parse(localStorage.getItem("btr2-badges")||"null")}catch(e){return null} }
+function saveEarned(a){ localStorage.setItem("btr2-badges",JSON.stringify(a)); }
+
+const awardQueue=[];
+function showNextAward(){
+  if(!awardQueue.length){ $("award").hidden=true; return; }
+  const b=awardQueue.shift();
+  $("awardIcon").textContent=b.icon;
+  $("awardName").textContent=b.name;
+  $("awardDesc").textContent=b.desc;
+  $("award").hidden=false;
+  fireConfetti({duration:2200});
+  if(navigator.vibrate) navigator.vibrate([80,50,80,50,120]);
+}
+$("awardBtn").onclick=showNextAward;
+
+function checkAchievements(){
+  const badges=computeBadges();
+  const earnedNow=badges.filter(b=>b.earned).map(b=>b.id);
+  let stored=earnedIds();
+  if(stored===null){ saveEarned(earnedNow); renderRecords(badges); return; }  // 최초: 소급 축하 없이 저장
+  const fresh=badges.filter(b=>b.earned && !stored.includes(b.id));
+  if(fresh.length){
+    saveEarned(earnedNow);
+    const wasEmpty=!awardQueue.length && $("award").hidden;
+    awardQueue.push(...fresh);
+    if(wasEmpty) showNextAward();
+  }
+  renderRecords(badges);
+}
+
+function renderRecords(badges){
+  if(!$("recLevel")) return;
+  badges=badges||computeBadges();
+  const chars=totalReadChars();
+  const lv=currentLevel(chars);
+  $("recLevel").textContent="Lv."+lv;
+  $("recLevelSub").textContent=`누적 ${chars.toLocaleString()}자 · 다음 레벨까지 ${(lv*LEVEL_STEP-chars).toLocaleString()}자`;
+  $("recLevelFill").style.width=((chars%LEVEL_STEP)/LEVEL_STEP*100)+"%";
+  const st=streaks();
+  $("recStreak").textContent=st.cur+"일";
+  $("recBest").textContent=st.best+"일";
+  const bookBadges=badges.filter(b=>b.id.startsWith("book-"));
+  $("recBooks").textContent=bookBadges.filter(b=>b.earned).length+"/66";
+  const grid=$("badgeGrid");
+  grid.innerHTML="";
+  const earned=badges.filter(b=>b.earned && !b.id.startsWith("book-"));
+  const earnedBooks=bookBadges.filter(b=>b.earned);
+  [...earned, ...earnedBooks.slice(-8)].forEach(b=>{
+    const chip=document.createElement("span");
+    chip.className="badge-chip";
+    chip.textContent=b.icon+" "+b.name;
+    grid.appendChild(chip);
+  });
+  if(!grid.children.length){
+    grid.innerHTML='<span class="set-desc">첫 배지를 향해 읽어보세요! 책 한 권을 완독하면 배지를 받아요 📖</span>';
+  }
 }
 
 /* ============================================================
@@ -1303,11 +1543,11 @@ function dragEnd(){
   const nowDone=dayDone(sch);
   render(); syncToSW();
   if(target && nowDone){
-    toast("🎉 오늘 분량을 모두 읽었습니다!");
-    if(navigator.vibrate) navigator.vibrate([60,40,60]);
+    celebrateDayComplete();
   }else if(count>1){
     toast(count+"장 "+(target?"체크했습니다":"해제했습니다"));
   }
+  checkAchievements();
 }
 chListEl.addEventListener("pointerup",dragEnd);
 chListEl.addEventListener("pointercancel",dragEnd);
@@ -1497,7 +1737,7 @@ function speakFrom(vi){
 /* ---- 공통 제어 ---- */
 function chapterDone(){
   const c=readerChapter();
-  if(!isRead(c)){ setRead(c,true); render(); syncToSW(); }
+  if(!isRead(c)){ setRead(c,true); render(); syncToSW(); checkAchievements(); }
   if(reader.qi+1<reader.queue.length){
     reader.qi++; reader.vi=0;
     delete audioEl.dataset.key;
@@ -1505,8 +1745,7 @@ function chapterDone(){
     if(reader.playing) startPlayback();
   }else{
     stopPlayback();
-    toast("🎉 오늘 분량 읽어주기 완료!");
-    if(navigator.vibrate) navigator.vibrate([60,40,60]);
+    celebrateDayComplete();
   }
 }
 async function startPlayback(){
@@ -1922,6 +2161,7 @@ document.addEventListener("visibilitychange",()=>{
 render();
 renderNotiStatus();
 scheduleInPageReminder();
+checkAchievements();
 </script>
 </body>
 </html>
