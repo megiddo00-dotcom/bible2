@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1F5C46">
+<meta name="description" content="시편 28편부터 시작하는 성경 1독 체크 - 구약 9/11, 신약 11/30 완독 목표">
+<title>말씀의 여정 — 성경 통독</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F1;
+  --card:#FFFFFF;
+  --ink:#1B2420;
+  --ink-soft:#5C6B62;
+  --line:#E2E7E0;
+  --ot:#1F5C46;         /* 구약 - 짙은 상록 */
+  --ot-soft:#E4EFEA;
+  --nt:#2E4A72;         /* 신약 - 깊은 청람 */
+  --nt-soft:#E6EBF4;
+  --gold:#B9891F;       /* 완료 표식 */
+  --gold-soft:#F6EED9;
+  --danger:#A8402F;
+  --radius:18px;
+  --serif:'Noto Serif KR', serif;
+  --sans:'Noto Sans KR', -apple-system, sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));
+}
+/* ---------- 헤더 ---------- */
+header{
+  background:linear-gradient(160deg,#17493A 0%, #1F5C46 60%, #27795C 100%);
+  color:#fff;
+  padding:calc(18px + env(safe-area-inset-top)) 20px 56px;
+  position:relative;
+}
+header.nt-phase{background:linear-gradient(160deg,#22375A 0%, #2E4A72 60%, #3D6194 100%)}
+.h-top{display:flex;justify-content:space-between;align-items:flex-start}
+.h-date{font-size:.82rem;opacity:.85;letter-spacing:.02em}
+.h-title{font-family:var(--serif);font-weight:700;font-size:1.45rem;margin-top:2px}
+.h-dday{
+  text-align:right;font-size:.78rem;opacity:.9;line-height:1.5;
+  background:rgba(255,255,255,.12);padding:8px 12px;border-radius:12px;
+}
+.h-dday b{font-size:1rem}
+/* ---------- 여정 리본 (시그니처) ---------- */
+.journey{
+  margin:14px 0 0;
+}
+.journey-labels{display:flex;justify-content:space-between;font-size:.72rem;opacity:.85;margin-bottom:6px}
+.journey-bar{position:relative;height:14px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.18)}
+.journey-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#E8C766,#C9A227);border-radius:7px;transition:width .6s ease}
+.journey-ticks{position:absolute;inset:0}
+.journey-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.35)}
+.journey-nt-divider{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;border-radius:2px}
+.journey-today{
+  position:absolute;top:-4px;width:4px;height:22px;background:#fff;border-radius:2px;
+  box-shadow:0 0 0 2px rgba(0,0,0,.15);transition:left .6s ease;
+}
+.journey-caption{font-size:.72rem;opacity:.8;margin-top:6px;text-align:center}
+/* ---------- 메인 ---------- */
+main{max-width:560px;margin:-34px auto 0;padding:0 14px;position:relative}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  box-shadow:0 2px 10px rgba(27,36,32,.06);
+  padding:18px;margin-bottom:14px;border:1px solid var(--line);
+}
+/* 오늘 진행 카드 */
+.today-head{display:flex;align-items:center;gap:16px}
+.ring-wrap{position:relative;width:88px;height:88px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--line);stroke-width:8}
+.ring-fg{fill:none;stroke:var(--ot);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+.nt-phase-ui .ring-fg{stroke:var(--nt)}
+.ring-fg.done{stroke:var(--gold)}
+.ring-text{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.ring-pct{font-family:var(--serif);font-weight:700;font-size:1.25rem}
+.ring-sub{font-size:.68rem;color:var(--ink-soft)}
+.today-info{flex:1;min-width:0}
+.today-range{font-family:var(--serif);font-weight:700;font-size:1.12rem;line-height:1.45;word-break:keep-all}
+.today-meta{font-size:.8rem;color:var(--ink-soft);margin-top:4px}
+.day-complete-badge{
+  display:none;margin-top:8px;font-size:.8rem;font-weight:700;color:var(--gold);
+  align-items:center;gap:5px;
+}
+.day-complete-badge.show{display:inline-flex}
+/* 오늘 분량 요약 */
+.today-sum{
+  display:flex;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);
+}
+.ts-item{flex:1;text-align:center}
+.ts-item + .ts-item{border-left:1px solid var(--line)}
+.ts-num{font-family:var(--serif);font-weight:700;font-size:1.05rem}
+.ts-num small{font-size:.72rem;font-weight:400;color:var(--ink-soft)}
+.ts-label{font-size:.7rem;color:var(--ink-soft);margin-top:2px}
+.ts-item.total .ts-num{color:var(--ot)}
+.nt-phase-ui .ts-item.total .ts-num{color:var(--nt)}
+.ts-item.left .ts-num.zero{color:var(--gold)}
+/* 날짜 이동 */
+.day-nav{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-bottom:14px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:0 2px 10px rgba(27,36,32,.06);
+  padding:10px 12px;
+}
+.day-nav .nav-arrow{
+  background:#FBFCFA;border:1px solid var(--line);border-radius:12px;
+  width:42px;height:42px;font-size:1.1rem;color:var(--ink);cursor:pointer;flex-shrink:0;
+  font-family:var(--sans);padding:0;
+}
+.day-nav .nav-arrow:disabled{opacity:.3}
+.day-nav .nav-center{flex:1;min-width:0;text-align:center}
+.nav-date{font-weight:700;font-size:.95rem;white-space:nowrap}
+.nav-rel{font-size:.75rem;color:var(--ink-soft);white-space:nowrap}
+.btn-today{
+  border:none;background:var(--ot-soft);color:var(--ot);font-weight:700;
+  font-size:.78rem;border-radius:20px;padding:5px 14px;margin-top:4px;cursor:pointer;
+  display:none;white-space:nowrap;font-family:var(--sans);
+}
+.btn-today.show{display:inline-block}
+.nt-phase-ui .btn-today{background:var(--nt-soft);color:var(--nt)}
+/* 장 체크리스트 */
+.chapter-list{display:flex;flex-direction:column;gap:8px}
+.book-group-label{
+  font-family:var(--serif);font-weight:700;font-size:.95rem;
+  margin:8px 0 2px;display:flex;align-items:center;gap:8px;color:var(--ink);
+}
+.book-group-label::after{content:"";flex:1;height:1px;background:var(--line)}
+.chapter-item{
+  display:flex;align-items:center;gap:12px;
+  background:#FBFCFA;border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;cursor:pointer;user-select:none;
+  transition:background .15s,border-color .15s;
+}
+.chapter-item:active{transform:scale(.985)}
+.chapter-item.checked{background:var(--ot-soft);border-color:var(--ot)}
+.nt-phase-ui .chapter-item.checked{background:var(--nt-soft);border-color:var(--nt)}
+.chk{
+  width:24px;height:24px;border-radius:8px;border:2px solid #C6CFC8;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:#fff;transition:all .15s;
+  touch-action:none;   /* 체크박스에서 시작한 드래그는 스크롤 대신 연속 체크 */
+}
+.chapter-list.dragging .chapter-item{transition:none}
+.chapter-list.dragging{cursor:ns-resize}
+.drag-hint{
+  font-size:.75rem;color:var(--ink-soft);line-height:1.6;
+  background:#F4F6F2;border-radius:12px;padding:9px 13px;margin-bottom:10px;
+}
+.chapter-item.checked .chk{background:var(--ot);border-color:var(--ot)}
+.nt-phase-ui .chapter-item.checked .chk{background:var(--nt);border-color:var(--nt)}
+.chk svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;opacity:0;transition:opacity .15s}
+.chapter-item.checked .chk svg{opacity:1}
+.ch-name{flex:1;font-weight:500;font-size:.95rem}
+.chapter-item.checked .ch-name{color:var(--ot);font-weight:700}
+.nt-phase-ui .chapter-item.checked .ch-name{color:var(--nt)}
+.ch-verses{font-size:.75rem;color:var(--ink-soft);background:#EFF2EE;border-radius:10px;padding:3px 9px}
+.check-all-row{display:flex;justify-content:flex-end;margin-top:10px}
+.btn-check-all{
+  border:none;background:none;color:var(--ink-soft);font-size:.8rem;
+  text-decoration:underline;cursor:pointer;padding:6px;
+}
+/* 밀림 알림 */
+.behind-banner{
+  display:none;background:#FBEFEC;border:1px solid #EAC7BF;color:var(--danger);
+  border-radius:14px;padding:12px 16px;font-size:.85rem;margin-bottom:14px;line-height:1.55;
+}
+.behind-banner.show{display:block}
+.behind-banner b{font-weight:700}
+/* 쉬는 날 배너 */
+.rest-banner{
+  display:none;background:var(--gold-soft);border:1px solid #E6D5A8;color:#7A5E1A;
+  border-radius:14px;padding:12px 16px;font-size:.85rem;margin-bottom:14px;line-height:1.55;
+}
+.rest-banner.show{display:block}
+.rest-banner b{font-weight:700}
+/* ---------- 전체 일정 탭 ---------- */
+.stats-row{display:flex;gap:10px;margin-bottom:14px}
+.stat{
+  flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 10px;text-align:center;
+}
+.stat-num{font-family:var(--serif);font-weight:700;font-size:1.3rem}
+.stat-label{font-size:.72rem;color:var(--ink-soft);margin-top:2px}
+.stat.ot .stat-num{color:var(--ot)}
+.stat.nt .stat-num{color:var(--nt)}
+.stat.gold .stat-num{color:var(--gold)}
+.sched-day{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border-bottom:1px solid var(--line);cursor:pointer;
+}
+.sched-day:last-child{border-bottom:none}
+.sched-day.today-row{background:var(--gold-soft);border-radius:12px}
+.sd-status{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:.7rem;
+  border:2px solid var(--line);color:transparent;background:#fff;
+}
+.sd-status.done{background:var(--gold);border-color:var(--gold);color:#fff}
+.sd-status.partial{border-color:var(--gold);color:var(--gold);font-weight:700}
+.sd-body{flex:1;min-width:0}
+.sd-date{font-size:.78rem;color:var(--ink-soft)}
+.sd-range{font-size:.9rem;font-weight:500;word-break:keep-all}
+.sd-tag{
+  font-size:.68rem;font-weight:700;border-radius:8px;padding:3px 8px;flex-shrink:0;
+}
+.sd-tag.ot{background:var(--ot-soft);color:var(--ot)}
+.sd-tag.nt{background:var(--nt-soft);color:var(--nt)}
+.month-label{
+  font-family:var(--serif);font-weight:700;font-size:1.05rem;
+  margin:20px 4px 8px;
+}
+/* 일정 탭: 오늘 위치 플로팅 버튼 */
+.btn-jump-today{
+  position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:40;
+  border:none;background:var(--ot);color:#fff;font-weight:700;font-size:.82rem;
+  font-family:var(--sans);border-radius:24px;padding:11px 16px;cursor:pointer;
+  box-shadow:0 4px 14px rgba(27,36,32,.25);white-space:nowrap;
+}
+.nt-phase-ui .btn-jump-today{background:var(--nt)}
+.btn-jump-today:active{transform:scale(.96)}
+/* ---------- 설정 탭 ---------- */
+.set-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.set-row:last-child{border-bottom:none}
+.set-title{font-weight:500;font-size:.95rem}
+.set-desc{font-size:.78rem;color:var(--ink-soft);margin-top:3px;line-height:1.5}
+.btn-primary{
+  border:none;background:var(--ot);color:#fff;font-weight:700;font-size:.85rem;
+  border-radius:12px;padding:10px 16px;cursor:pointer;flex-shrink:0;
+}
+.btn-primary:disabled{background:#B6C3BB}
+.btn-outline{
+  border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:500;
+  font-size:.85rem;border-radius:12px;padding:10px 16px;cursor:pointer;flex-shrink:0;
+}
+select{
+  border:1px solid var(--line);border-radius:12px;padding:9px 12px;
+  font-size:.9rem;font-family:var(--sans);background:#fff;color:var(--ink);
+}
+.plan-grid{display:flex;gap:10px;flex-wrap:wrap}
+.plan-grid label{flex:1;min-width:140px;display:flex;flex-direction:column;gap:5px;font-size:.78rem;color:var(--ink-soft);font-weight:500}
+.plan-grid input[type=date]{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.9rem;font-family:var(--sans);background:#fff;color:var(--ink)}
+.time-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.time-chip{
+  border:1px solid var(--line);background:#FBFCFA;color:var(--ink);
+  font-family:var(--sans);font-size:.85rem;font-weight:500;
+  border-radius:20px;padding:8px 14px;cursor:pointer;white-space:nowrap;
+}
+.time-chip.on{background:var(--ot);border-color:var(--ot);color:#fff;font-weight:700}
+.nt-phase-ui .time-chip.on{background:var(--nt);border-color:var(--nt)}
+.noti-status{font-size:.78rem;margin-top:6px;font-weight:700}
+.noti-status.on{color:var(--ot)}
+.noti-status.off{color:var(--danger)}
+/* ---------- 하단 탭바 ---------- */
+nav.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom);
+}
+.tab-btn{
+  flex:1;border:none;background:none;padding:10px 0 8px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:#9AA79F;font-size:.68rem;font-weight:500;font-family:var(--sans);
+}
+.tab-btn svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab-btn.active{color:var(--ot);font-weight:700}
+.nt-phase-ui .tab-btn.active{color:var(--nt)}
+.tab-page{display:none}
+.tab-page.active{display:block}
+
+/* ---------- 본문 읽기/듣기 ---------- */
+.ch-play{
+  border:1px solid var(--line);background:#fff;border-radius:50%;
+  width:34px;height:34px;flex-shrink:0;cursor:pointer;color:var(--ot);
+  display:flex;align-items:center;justify-content:center;font-size:.85rem;padding:0;
+}
+.nt-phase-ui .ch-play{color:var(--nt)}
+.btn-listen-day{
+  width:100%;margin-top:14px;border:none;border-radius:14px;padding:13px;
+  background:var(--ot);color:#fff;font-weight:700;font-size:.92rem;
+  font-family:var(--sans);cursor:pointer;
+}
+.nt-phase-ui .btn-listen-day{background:var(--nt)}
+.reader{
+  position:fixed;inset:0;z-index:200;background:var(--bg);
+  display:flex;flex-direction:column;
+}
+.reader[hidden]{display:none}
+.reader-head{
+  display:flex;align-items:center;gap:10px;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  background:var(--card);border-bottom:1px solid var(--line);
+}
+.rd-close{
+  border:none;background:#EFF2EE;border-radius:50%;width:36px;height:36px;
+  font-size:1rem;cursor:pointer;color:var(--ink);flex-shrink:0;
+}
+.rd-title{flex:1;font-family:var(--serif);font-weight:700;font-size:1.05rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-rate{border:1px solid var(--line);border-radius:10px;padding:7px 8px;font-size:.85rem;background:#fff;font-family:var(--sans)}
+.reader-body{
+  flex:1;overflow-y:auto;padding:18px 20px 24px;line-height:1.9;font-size:1.02rem;
+  word-break:keep-all;
+}
+.rd-verse{margin-bottom:2px}
+.rd-verse .vn{
+  color:var(--ink-soft);font-size:.7rem;font-weight:700;vertical-align:super;margin-right:4px;
+}
+.rd-verse.now{background:var(--gold-soft);border-radius:6px;box-shadow:0 0 0 4px var(--gold-soft)}
+.reader-ctrl{
+  display:flex;gap:8px;padding:12px 16px;background:var(--card);
+  border-top:1px solid var(--line);
+}
+.reader-ctrl button{
+  border:1px solid var(--line);background:#FBFCFA;border-radius:14px;
+  padding:13px 10px;font-size:.85rem;font-weight:500;font-family:var(--sans);
+  cursor:pointer;color:var(--ink);flex:1;white-space:nowrap;
+}
+.reader-ctrl .rd-main{
+  flex:1.6;background:var(--ot);border-color:var(--ot);color:#fff;font-weight:700;font-size:.95rem;
+}
+.nt-phase-ui .reader-ctrl .rd-main{background:var(--nt);border-color:var(--nt)}
+.rd-hint{
+  padding:0 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);
+  font-size:.72rem;color:var(--ink-soft);text-align:center;line-height:1.5;
+}
+/* 토스트 */
+#toast{
+  position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(10px);
+  background:var(--ink);color:#fff;font-size:.85rem;border-radius:24px;
+  padding:11px 20px;opacity:0;pointer-events:none;transition:all .3s;z-index:99;
+  white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* 완료 축하 */
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.day-complete-badge.show{animation:pop .4s ease}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<header id="appHeader">
+  <div class="h-top">
+    <div>
+      <div class="h-date" id="hDate"></div>
+      <div class="h-title">말씀의 여정 <span style="font-size:.85rem;opacity:.75">통독</span></div>
+    </div>
+    <div class="h-dday" id="hDday"></div>
+  </div>
+  <div class="journey">
+    <div class="journey-labels">
+      <span id="journeyStart"></span><span id="journeyPhaseLabel"></span><span id="journeyEnd"></span>
+    </div>
+    <div class="journey-bar" id="journeyBar">
+      <div class="journey-fill" id="journeyFill"></div>
+      <div class="journey-ticks" id="journeyTicks"></div>
+      <div class="journey-today" id="journeyToday"></div>
+    </div>
+    <div class="journey-caption" id="journeyCaption"></div>
+  </div>
+</header>
+
+<main>
+  <!-- 오늘 탭 -->
+  <section class="tab-page active" id="page-today">
+    <div class="rest-banner" id="restBanner"></div>
+    <div class="behind-banner" id="behindBanner"></div>
+
+    <div class="day-nav">
+      <button class="nav-arrow" id="btnPrev" aria-label="이전 날">‹</button>
+      <div class="nav-center">
+        <div class="nav-date" id="navDate"></div>
+        <div class="nav-rel" id="navRel"></div>
+        <button class="btn-today" id="btnToday">오늘로 이동</button>
+      </div>
+      <button class="nav-arrow" id="btnNext" aria-label="다음 날">›</button>
+    </div>
+
+    <div class="card">
+      <div class="today-head">
+        <div class="ring-wrap">
+          <svg width="88" height="88" viewBox="0 0 88 88">
+            <circle class="ring-bg" cx="44" cy="44" r="38"/>
+            <circle class="ring-fg" id="ringFg" cx="44" cy="44" r="38"
+              stroke-dasharray="238.76" stroke-dashoffset="238.76"/>
+          </svg>
+          <div class="ring-text">
+            <div class="ring-pct" id="ringPct">0%</div>
+            <div class="ring-sub" id="ringSub">0/0장</div>
+          </div>
+        </div>
+        <div class="today-info">
+          <div class="today-range" id="todayRange"></div>
+          <div class="today-meta" id="todayMeta"></div>
+          <div class="day-complete-badge" id="dayBadge">✦ 오늘 목표 완료!</div>
+        </div>
+      </div>
+      <div class="today-sum">
+        <div class="ts-item total">
+          <div class="ts-num" id="tsTotal"></div>
+          <div class="ts-label">오늘 분량</div>
+        </div>
+        <div class="ts-item">
+          <div class="ts-num" id="tsRead"></div>
+          <div class="ts-label">읽음</div>
+        </div>
+        <div class="ts-item left">
+          <div class="ts-num" id="tsLeft"></div>
+          <div class="ts-label">남음</div>
+        </div>
+      </div>
+      <button class="btn-listen-day" id="btnListenDay">🔊 이어서 읽어주기</button>
+    </div>
+
+    <div class="card">
+      <div class="chapter-list" id="chapterList"></div>
+      <div class="check-all-row">
+        <button class="btn-check-all" id="btnCheckAll">전체 체크</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 일정 탭 -->
+  <section class="tab-page" id="page-schedule">
+    <div class="stats-row">
+      <div class="stat ot"><div class="stat-num" id="statOt">0%</div><div class="stat-label">구약 진행</div></div>
+      <div class="stat nt"><div class="stat-num" id="statNt">0%</div><div class="stat-label">신약 진행</div></div>
+      <div class="stat gold"><div class="stat-num" id="statDays">0일</div><div class="stat-label">완료한 날</div></div>
+    </div>
+    <div id="scheduleList"></div>
+    <button class="btn-jump-today" id="btnJumpToday">📍 오늘 위치</button>
+  </section>
+
+  <!-- 설정 탭 -->
+  <section class="tab-page" id="page-settings">
+    <div class="card">
+      <div class="set-row" style="display:block;border-bottom:none;padding-top:4px">
+        <div class="set-title">📅 통독 일정 설정</div>
+        <div class="set-desc" style="margin-bottom:12px">일정을 바꿔도 장별 읽기 기록은 유지됩니다.</div>
+        <div class="plan-grid">
+          <label>시작일 <input type="date" id="planStart"></label>
+          <label>최종 만료일 <input type="date" id="planEnd"></label>
+        </div>
+        <div class="set-desc" style="margin-top:12px;font-weight:700;color:var(--ink)">읽기 순서</div>
+        <div class="time-chips" id="planOrder">
+          <button class="time-chip" data-v="ot">구약 먼저</button>
+          <button class="time-chip" data-v="nt">신약 먼저</button>
+        </div>
+        <div class="plan-grid" style="margin-top:12px">
+          <label><span id="planMidLabel">구약 만료일</span> <input type="date" id="planMid"></label>
+          <button class="btn-outline" id="planMidAuto" style="align-self:end">자동 배분</button>
+        </div>
+        <div class="set-desc">만료일을 조정하면 나머지 분량은 최종 만료일에 맞춰 자동 조절됩니다.</div>
+        <div class="set-desc" style="margin-top:12px;font-weight:700;color:var(--ink)">일정에 포함할 날</div>
+        <div class="time-chips" id="planDays">
+          <button class="time-chip" data-v="sat">토요일</button>
+          <button class="time-chip" data-v="sun">일요일</button>
+          <button class="time-chip" data-v="hol">공휴일</button>
+        </div>
+        <button class="btn-primary" id="planApply" style="width:100%;margin-top:14px;padding:13px">일정 적용</button>
+        <div class="set-desc" id="planSummary" style="margin-top:10px"></div>
+        <div class="set-desc" style="margin-top:14px;font-weight:700;color:var(--ink)">공휴일 자동 갱신 (2028년 이후)</div>
+        <div class="set-desc">2026~2027년 공휴일은 내장되어 있습니다. 그 이후 연도가 일정에 포함되면 Google Calendar 공휴일 정보를 가져옵니다. Google Cloud에서 <b>Calendar API</b>를 사용 설정하고 API 키(HTTP 리퍼러 제한 권장)를 입력하세요.</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <input type="text" id="holKey" placeholder="Google API 키 (선택)" style="flex:1;min-width:180px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.85rem;font-family:var(--sans)">
+          <button class="btn-outline" id="btnHolRefresh">공휴일 갱신</button>
+        </div>
+        <div class="set-desc" id="holStatus" style="margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="set-row" style="display:block">
+        <div class="set-title">🔔 저녁 알림</div>
+        <div class="set-desc">선택한 시간에 오늘 분량이 남아 있으면 알림을 보냅니다.<br>알림을 받으려면 먼저 권한을 허용해 주세요.</div>
+        <div style="margin-top:12px">
+          <button class="btn-primary" id="btnNotiPerm">알림 권한 허용</button>
+        </div>
+        <div class="set-desc" style="margin-top:14px">알림 받을 시간 (여러 개 선택 가능)</div>
+        <div class="time-chips" id="timeChips"></div>
+        <div class="noti-status" id="notiStatus"></div>
+      </div>
+      <div class="set-row">
+        <div>
+          <div class="set-title">홈 화면에 설치</div>
+          <div class="set-desc">앱처럼 사용하고 알림을 더 안정적으로 받을 수 있어요</div>
+        </div>
+        <button class="btn-primary" id="btnInstall" style="display:none">설치</button>
+      </div>
+      <div class="set-row">
+        <div>
+          <div class="set-title">알림 테스트 (5초 후 발송)</div>
+          <div class="set-desc">누른 뒤 <b>홈 화면으로 나가세요</b>. 앱 화면을 보고 있는 동안에는 안드로이드가 팝업을 생략하고 상단바에만 표시합니다.</div>
+        </div>
+        <button class="btn-outline" id="btnNotiTest">테스트</button>
+      </div>
+      <div class="set-row" style="display:block">
+        <div class="set-title">📢 알림이 화면에 팝업으로 안 뜬다면</div>
+        <div class="set-desc">
+          ① <b>앱을 보고 있는 동안에는</b> 안드로이드가 팝업을 생략합니다 — 테스트 버튼을 누르고 홈 화면으로 나가서 확인하세요.<br>
+          ② 그래도 안 뜨면: 알림을 길게 누르기 → ⚙️ → <b>"알림 팝업"</b> 체크 확인, 알림 유형을 "소리 및 팝업"으로<br>
+          ③ 방해금지 모드가 켜져 있으면 팝업이 표시되지 않습니다
+        </div>
+      </div>
+      <div class="set-row" style="display:block">
+        <div class="set-title">🎧 낭독 음원 관리</div>
+        <div class="set-desc">
+          MP3 낭독 파일을 휴대폰에 저장해두면 인터넷 없이 재생됩니다.<br>
+          PC에서 생성한 audio 폴더의 mp3 파일들을 폰으로 복사한 뒤, 아래 버튼으로 전체 선택해서 가져오세요.
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn-outline" id="btnImportF">여성 음원 가져오기</button>
+          <button class="btn-outline" id="btnImportM">남성 음원 가져오기</button>
+          <button class="btn-outline" id="btnAudioClear" style="color:var(--danger)">저장 음원 삭제</button>
+        </div>
+        <div class="set-desc" id="audioStatus" style="margin-top:10px"></div>
+        <input type="file" id="fileImportF" accept=".mp3,audio/mpeg" multiple hidden>
+        <input type="file" id="fileImportM" accept=".mp3,audio/mpeg" multiple hidden>
+      </div>
+      <div class="set-row">
+        <div>
+          <div class="set-title">기록 초기화</div>
+          <div class="set-desc">모든 읽기 체크 기록을 삭제합니다</div>
+        </div>
+        <button class="btn-outline" id="btnReset" style="color:var(--danger)">초기화</button>
+      </div>
+    </div>
+    <div class="card" style="font-size:.8rem;color:var(--ink-soft);line-height:1.7">
+      <b style="color:var(--ink)">일정 안내</b><br>
+      · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
+      · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
+      · 공휴일 데이터는 2026~2027년 기준입니다.<br>
+      · 읽기 기록은 이 기기에만 저장됩니다.
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-tab="today">
+    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M9 7h7M9 11h5"/></svg>
+    오늘 읽기
+  </button>
+  <button class="tab-btn" data-tab="schedule">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    전체 일정
+  </button>
+  <button class="tab-btn" data-tab="settings">
+    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    알림 설정
+  </button>
+</nav>
+
+
+<div class="reader" id="reader" hidden>
+  <div class="reader-head">
+    <button class="rd-close" id="rdClose" aria-label="닫기">✕</button>
+    <div class="rd-title" id="rdTitle"></div>
+    <select class="rd-rate" id="rdVoice">
+      <option value="female">여성</option>
+      <option value="male">남성</option>
+    </select>
+    <select class="rd-rate" id="rdRate">
+      <option value="0.8">0.8배속</option>
+      <option value="1" selected>1.0배속</option>
+      <option value="1.2">1.2배속</option>
+      <option value="1.5">1.5배속</option>
+    </select>
+  </div>
+  <div class="reader-body" id="rdBody"></div>
+  <div class="reader-ctrl">
+    <button id="rdPrev">⏮ 이전 장</button>
+    <button class="rd-main" id="rdPlay">▶ 재생</button>
+    <button id="rdNext">다음 장 ⏭</button>
+  </div>
+  <div class="rd-hint">장이 끝나면 자동 체크 후 다음 장으로 이어집니다 · 개역한글 낭독(남/여 선택) · 재생 중 화면 꺼짐 방지</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   성경 데이터 (개역한글판 기준 장별 절수·글자수)
+============================================================ */
+const BIBLE = {
+  ot: [
+    ["창세기","gn",[31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,31,55,32,19,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26],[1198,920,1165,1131,710,847,733,768,1023,914,914,871,651,1017,826,830,1111,1578,1766,902,1353,1164,882,3128,1271,1557,2308,1023,1523,1402,2678,1507,835,1351,1172,1542,1647,1413,1023,897,2142,1925,1747,1572,1279,1315,1569,1196,1341,1189]],
+    ["출애굽기","ex",[21,25,22,31,23,30,25,32,35,29,10,51,22,31,27,36,16,27,25,26,36,31,33,18,40,37,21,43,46,38,18,35,23,35,35,38,29,31,43,38],[747,1128,1342,1447,1175,1260,1081,1641,1565,1528,517,2103,1099,1563,1258,1792,851,1311,1170,953,1328,1242,1334,759,1130,1190,759,1610,1790,1316,648,1813,1118,1664,1279,1337,935,1111,1476,1112]],
+    ["레위기","lv",[17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,37,27,24,33,44,23,55,46,34],[682,671,680,1348,1011,1221,1483,1388,961,1048,1689,392,2496,2096,1254,1475,775,1060,1408,1307,909,1359,1791,856,2176,2033,1263]],
+    ["민수기","nm",[54,34,51,49,31,27,89,26,23,34,35,16,33,45,41,50,13,32,22,29,35,41,30,25,18,65,22,31,40,16,54,42,56,29,34,13],[1886,1081,1871,1764,1335,1164,3139,1145,1096,1251,1713,685,1111,2032,1521,2333,598,1679,1022,1398,1591,2029,1473,1135,726,2413,918,1078,1410,810,1855,1844,1419,861,1358,702]],
+    ["신명기","dt",[46,37,29,49,33,25,26,20,29,22,32,32,18,29,23,22,20,22,21,20,23,29,25,22,19,19,26,68,29,20,30,52,29,12],[2243,1770,1391,2598,1536,1112,1596,968,1627,1029,1477,1643,948,1062,1082,1022,1035,1024,981,1024,1150,1277,1071,1071,931,1079,1060,3201,1438,1124,1617,2209,1395,487]],
+    ["여호수아","jos",[18,24,17,24,15,27,26,35,27,41,23,24,33,15,62,10,18,28,51,9,45,34,16,33],[1069,1271,854,1083,879,1394,1666,1763,1448,2193,1138,792,1400,862,1755,419,1118,1213,1627,483,1593,2214,970,1980]],
+    ["사사기","jdg",[36,23,31,24,31,40,25,35,56,18,40,15,25,20,20,31,13,31,30,48,25],[1673,1206,1475,1301,1470,2312,1603,1764,2852,857,2174,826,1446,1281,1186,2016,692,1680,1727,2325,1344]],
+    ["룻기","rt",[22,23,18,22],[1222,1340,937,1140]],
+    ["사무엘상","sa1",[28,36,21,22,12,21,16,22,27,27,15,25,23,52,35,23,57,30,24,42,15,23,29,22,44,25,12,25,11,30,13],[1443,2010,1094,1269,696,1201,907,896,1640,1506,861,1470,1149,2988,1943,1317,2836,1500,1335,2304,922,1364,1539,1151,2462,1581,687,1479,769,1509,587]],
+    ["사무엘하","sa2",[27,32,39,12,25,23,29,18,13,19,27,31,39,33,37,23,29,33,43,26,22,51,39,25],[1280,1600,2164,726,1195,1135,1433,752,729,984,1424,1698,2012,1930,1994,1361,1676,2086,2608,1516,1340,1652,1552,1514]],
+    ["열왕기상","kg1",[52,46,28,34,18,38,51,66,28,29,43,33,34,31,34,34,24,46,21,43,29,52],[2640,2793,1447,1268,901,1410,2191,3519,1325,1309,2212,1825,1916,1596,1503,1612,1081,2354,1246,2434,1502,2527]],
+    ["열왕기하","kg2",[18,25,27,44,27,33,20,29,37,36,21,21,25,29,38,20,41,37,37,21,26,20,37,20,30],[1193,1623,1455,2472,1746,1770,1296,1593,2022,1987,1019,1056,1316,1453,1646,963,2094,2005,1834,1105,1149,1050,2209,939,1351]],
+    ["역대상","ch1",[54,54,24,43,26,81,40,40,44,14,47,40,14,17,29,43,27,17,19,8,30,19,32,31,31,32,34,21,30],[1432,1682,813,1614,1150,2619,1561,1026,1653,629,1727,1743,654,636,1202,1507,1334,711,998,426,1551,1030,1063,970,970,1236,1317,1255,1579]],
+    ["역대하","ch2",[17,18,17,22,14,42,21,18,31,19,23,16,22,15,19,14,19,34,11,37,20,12,21,27,28,23,9,27,36,27,21,33,25,33,27,23],[819,1049,668,834,696,2376,1131,840,1400,1017,940,802,1097,786,862,713,784,2060,693,2076,1920,1152,2016,2592,2688,2208,864,2592,3456,2592,2016,3168,2400,3168,2592,2208]],
+    ["에스라","ezr",[11,70,13,24,17,22,28,36,15,44],[587,1633,793,1221,908,1196,1395,1722,1100,1708]],
+    ["느헤미야","ne",[11,20,32,23,19,19,73,18,38,39,36,47,31],[632,1203,1507,1199,1071,1042,1881,1130,2344,1178,1463,1895,1755]],
+    ["에스더","est",[22,23,15,14,14,14,10,17,32,3],[1063,1197,819,698,765,835,644,965,1492,134]],
+    ["욥기","jb",[22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,24,24,30,24,24,17,0],[1121,701,862,634,804,889,749,579,1041,788,595,723,824,697,1041,671,463,558,834,831,992,841,499,825,152,358,628,722,737,954,1295,688,968,1144,1536,754,1150,907,637,914,760,0]],
+    ["시편","ps",[6,12,8,8,12,10,17,8,20,18,7,8,6,7,5,9,15,50,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,11,40,20,13,17,13,11,5,26,17,11,9,14,20,23,19,9,6,7,23,13,11,11,17,12,8,12,11,10,13,20,7,35,36,5,24,19,28,23,9,12,20,72,13,18,16,8,18,12,13,17,7,18,52,17,16,13,5,23,11,13,12,9,9,5,8,28,22,34,45,48,43,13,31,7,10,10,9,8,18,19,2,9,176,7,8,9,4,8,5,6,5,6,8,8,3,18,3,3,21,26,9,8,24,13,10,7,12,15,21,10,20,14,9,6],[198,351,274,291,453,314,519,237,663,814,237,266,244,281,268,297,562,1640,462,302,413,1019,213,293,658,333,590,380,361,433,909,405,594,648,1029,382,1137,598,497,748,455,512,253,899,595,361,265,387,592,700,632,323,282,239,778,451,447,376,658,420,241,428,351,343,475,651,221,1291,1216,203,859,624,754,780,315,355,593,2180,514,579,511,233,523,427,387,601,213,616,1597,561,490,438,182,701,357,438,350,299,345,172,307,820,660,1018,1202,1387,1145,437,907,253,315,301,226,205,521,518,65,250,4965,161,213,231,141,226,177,181,191,162,227,220,121,542,93,71,589,763,320,321,759,471,372,273,466,562,622,319,547,341,263,162]],
+    ["잠언","pr",[33,22,35,27,23,35,27,36,18,30,30,28,24,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,27,33,31],[1005,541,974,736,663,983,679,1021,505,880,927,875,775,1102,994,1048,898,732,957,932,929,855,1017,1013,855,852,829,897,842,1065,862]],
+    ["전도서","ec",[18,26,22,16,19,12,29,17,18,20,10,14],[608,1170,880,667,850,512,1047,794,950,652,436,590]],
+    ["아가","so",[17,17,11,16,16,13,13,14],[561,627,436,629,731,516,490,632]],
+    ["이사야","is",[31,22,26,6,30,13,25,22,21,34,16,6,21,32,9,14,14,7,25,6,17,25,18,23,12,21,13,29,24,33,9,19,24,17,10,22,36,22,8,31,29,25,28,28,25,13,15,22,26,11,23,15,12,17,13,12,21,14,21,22,11,12,19,12,25,24],[1423,853,1003,317,1531,637,1051,991,1046,1481,771,258,896,1444,403,724,711,385,1214,330,717,1078,862,977,638,962,846,1472,1251,1759,593,710,1152,802,492,1235,1742,1032,440,1448,1436,1159,1310,1571,1432,642,785,1149,1538,669,1299,821,766,888,667,619,1030,909,1058,1135,662,645,996,624,1405,1469]],
+    ["예레미야","je",[18,37,25,31,31,30,34,22,26,25,23,17,27,22,21,21,27,23,15,18,14,30,40,10,38,24,22,17,32,24,40,44,26,22,19,32,21,28,18,16,18,22,13,30,5,28,7,47,39,46,63,33],[824,1946,1514,1532,1570,1490,1681,1254,1383,1164,1309,928,1259,1317,1223,1164,1364,1204,858,1069,823,1487,2233,562,1843,1335,1259,888,1783,1216,2237,2246,1376,1254,1111,1697,1020,1653,826,1118,976,1318,721,1961,298,1358,357,2102,2099,2435,3023,1406]],
+    ["예레미야애가","la",[22,22,66,22,22],[1323,1420,1573,978,618]],
+    ["에스겔","ez",[28,10,27,17,17,14,27,18,11,22,25,28,23,23,8,63,24,32,14,49,32,31,49,27,17,21,36,26,21,26,18,32,33,31,15,38,28,23,29,49,26,20,27,31,25,24,23,35],[1223,435,1322,682,898,737,1290,953,652,912,1147,1281,1254,1272,332,2952,1215,1573,526,2719,1487,1405,2127,1239,839,1099,1584,1307,1082,1162,1047,1764,1833,1531,664,1983,1400,1160,1469,2137,1025,758,1324,1557,1272,1237,1139,1589]],
+    ["다니엘","da",[21,49,30,37,31,28,28,27,27,21,45,13],[964,2523,1773,2239,1694,1626,1441,1297,1769,998,2371,627]],
+    ["호세아","ho",[11,23,5,19,15,11,16,14,17,15,12,14,16,9],[595,1113,252,863,711,441,757,659,903,746,629,583,754,481]],
+    ["요엘","jl",[20,32,21],[902,1607,951]],
+    ["아모스","am",[15,16,15,13,27,14,17,14,15],[745,745,666,847,1164,688,812,717,876]],
+    ["오바댜","ob",[21],[1134]],
+    ["요나","jn",[17,10,10,11],[910,417,438,587]],
+    ["미가","mi",[16,13,12,13,15,16,20],[772,713,600,809,687,825,989]],
+    ["나훔","na",[15,13,19],[703,633,883]],
+    ["하박국","hb",[17,20,19],[801,989,851]],
+    ["스바냐","zp",[18,15,20],[888,775,1090]],
+    ["학개","hg",[15,23],[798,1155]],
+    ["스가랴","zc",[21,13,10,14,11,15,14,23,17,12,17,14,9,21],[1122,545,492,639,511,615,599,1135,907,659,854,753,436,1064]],
+    ["말라기","ml",[14,17,18,6],[1008,1140,1060,318]]
+  ],
+  nt: [
+    ["마태복음","mt",[25,23,17,25,48,34,29,34,38,42,30,50,58,36,39,28,27,35,30,34,46,46,39,51,46,75,66,20],[905,991,711,948,1804,1469,1064,1366,1493,1574,1208,1966,2076,1205,1463,1187,1159,1324,1275,1268,1991,1525,1495,1697,1723,3013,2497,727]],
+    ["마가복음","mk",[45,28,35,41,43,56,37,38,50,52,33,44,37,72,47,20],[1599,1295,1199,1481,1631,2176,1445,1560,2204,2300,1399,1948,1391,2955,1655,797]],
+    ["누가복음","lk",[80,52,38,44,39,49,50,56,62,42,54,59,35,35,32,31,37,43,48,47,38,71,56,53],[2566,1715,1681,1799,1714,2052,2257,2363,2649,1822,2247,2410,1532,1396,1196,1385,1373,1788,1768,1776,1308,2597,2000,1773]],
+    ["요한복음","joh",[51,25,36,54,47,71,53,59,41,42,57,50,38,31,27,33,26,40,42,31,25],[2047,950,1423,2068,1863,2729,1988,2651,1734,1554,2248,2048,1652,1421,1121,1454,1312,1924,1937,1350,1405]],
+    ["사도행전","ac",[26,47,26,37,42,15,60,40,43,48,30,25,52,28,41,40,34,28,41,38,40,30,34,27,27,32,44,31],[1168,1811,1109,1413,1667,627,2409,1474,1770,1880,1123,1049,2112,1060,1578,1637,1516,1194,1700,1492,1741,1418,1573,1099,1335,1440,1616,1262]],
+    ["로마서","ro",[32,29,31,25,21,23,25,39,33,21,36,21,14,23,33,27],[1441,1133,1121,1019,1028,987,1095,1602,1361,902,1543,732,664,962,1431,1075]],
+    ["고린도전서","co1",[31,16,23,21,13,20,40,13,27,33,34,31,13,40,58,24],[1318,747,901,953,599,838,1693,571,1224,1216,1270,1108,531,1594,2224,810]],
+    ["고린도후서","co2",[24,17,18,18,21,18,16,24,15,18,33,21,13],[1162,745,713,786,1006,732,955,983,707,819,1352,1146,653]],
+    ["갈라디아서","ga",[24,21,29,31,26,18],[889,1057,1278,1175,902,669]],
+    ["에베소서","ep",[23,22,21,32,33,24],[909,882,780,1159,1064,849]],
+    ["빌립보서","ph",[30,30,21,23],[1193,1119,886,924]],
+    ["골로새서","cl",[29,23,25,9],[1245,912,900,342]],
+    ["데살로니가전서","th1",[10,20,13,18,28],[494,967,584,713,809]],
+    ["데살로니가후서","th2",[12,17,18],[567,707,682]],
+    ["디모데전서","ti1",[20,15,16,16,25,21],[897,525,609,550,898,927]],
+    ["디모데후서","ti2",[18,26,17,21],[782,994,675,785]],
+    ["디도서","tt",[16,15,15],[731,541,644]],
+    ["빌레몬서","phm",[25],[837]],
+    ["히브리서","he",[14,18,19,16,14,20,28,13,28,39,40,29,25],[621,846,716,757,589,781,1062,647,1168,1397,1733,1250,1022]],
+    ["야고보서","ja",[27,26,18,17,20],[992,1032,649,729,812]],
+    ["베드로전서","pe1",[25,22,19,14,0],[1150,936,837,610,0]],
+    ["베드로후서","pe2",[21,22,18],[891,1020,841]],
+    ["요한일서","jo1",[10,29,24,21,21],[463,1376,1077,1003,908]],
+    ["요한이서","jo2",[13],[546]],
+    ["요한삼서","jo3",[14],[561]],
+    ["유다서","ju",[25],[1262]],
+    ["요한계시록","re",[20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21],[875,1345,1107,585,675,803,821,552,883,529,954,798,809,1093,414,906,868,1292,1050,698,1233,929]]
+  ]
+};
+
+/* ============================================================
+   일정 생성: 설정(plan) 기반 · 글자수 균등 배분
+============================================================ */
+const PS_FROM = 1;
+
+// 내장 공휴일 (2026~2027) — 이후 연도는 API로 자동 보충
+const BUILTIN_HOL_YEARS=[2026,2027];
+const BUILTIN_HOLIDAYS={
+  "2026-01-01":"신정","2026-02-16":"설날 연휴","2026-02-17":"설날","2026-02-18":"설날 연휴",
+  "2026-03-01":"삼일절","2026-03-02":"대체공휴일 (삼일절)","2026-05-01":"근로자의 날",
+  "2026-05-05":"어린이날","2026-05-24":"부처님오신날","2026-05-25":"대체공휴일 (부처님오신날)",
+  "2026-06-06":"현충일","2026-07-17":"제헌절","2026-08-15":"광복절","2026-08-17":"대체공휴일 (광복절)",
+  "2026-09-24":"추석 연휴","2026-09-25":"추석","2026-09-26":"추석 연휴",
+  "2026-10-03":"개천절","2026-10-05":"대체공휴일 (개천절)","2026-10-09":"한글날","2026-12-25":"성탄절",
+  "2027-01-01":"신정","2027-02-06":"설날 연휴","2027-02-07":"설날","2027-02-08":"설날 연휴",
+  "2027-02-09":"대체공휴일 (설날)","2027-03-01":"삼일절","2027-05-01":"근로자의 날",
+  "2027-05-05":"어린이날","2027-05-13":"부처님오신날","2027-06-06":"현충일","2027-07-17":"제헌절",
+  "2027-08-15":"광복절","2027-08-16":"대체공휴일 (광복절)",
+  "2027-09-14":"추석 연휴","2027-09-15":"추석","2027-09-16":"추석 연휴",
+  "2027-10-03":"개천절","2027-10-04":"대체공휴일 (개천절)","2027-10-09":"한글날","2027-10-11":"대체공휴일 (한글날)",
+  "2027-12-25":"성탄절","2027-12-27":"대체공휴일 (성탄절)"
+};
+
+function holCache(){ try{return JSON.parse(localStorage.getItem("btr2-hol")||"{}")}catch(e){return{}} }
+function saveHolCache(c){ localStorage.setItem("btr2-hol",JSON.stringify(c)); }
+let HOLIDAYS={};
+function refreshHolidayMerge(){
+  HOLIDAYS={...BUILTIN_HOLIDAYS};
+  const c=holCache();
+  Object.values(c).forEach(year=>Object.assign(HOLIDAYS,year));
+}
+refreshHolidayMerge();
+
+// Google Calendar 대한민국 공휴일 캘린더에서 해당 연도 가져오기
+async function fetchHolidayYear(year,key){
+  const cal=encodeURIComponent("ko.south_korea#holiday@group.v.calendar.google.com");
+  const url=`https://www.googleapis.com/calendar/v3/calendars/${cal}/events`+
+    `?key=${encodeURIComponent(key)}&timeMin=${year}-01-01T00:00:00Z&timeMax=${year+1}-01-01T00:00:00Z`+
+    `&maxResults=120&singleEvents=true`;
+  const r=await fetch(url);
+  if(!r.ok) throw new Error("holiday api "+r.status);
+  const j=await r.json();
+  const out={};
+  (j.items||[]).forEach(ev=>{
+    const d=ev.start && ev.start.date;
+    if(!d) return;
+    const desc=(ev.description||"");
+    // '공휴일'/'명절'만 채택 (어버이날 같은 '기념일' 제외)
+    if(desc.includes("공휴일")||desc.includes("명절")) out[d]=ev.summary;
+  });
+  return out;
+}
+// 일정 범위에 필요한 연도 중 내장/캐시에 없는 연도를 API로 보충
+async function ensureHolidays(startKey,endKey){
+  const y1=+startKey.slice(0,4), y2=+endKey.slice(0,4);
+  const cache=holCache();
+  const missing=[];
+  for(let y=y1;y<=y2;y++){
+    if(!BUILTIN_HOL_YEARS.includes(y) && !cache[y]) missing.push(y);
+  }
+  if(!missing.length) return {ok:true};
+  const key=(store.settings.holKey||"").trim();
+  if(!key) return {ok:false, missing};
+  for(const y of missing){
+    cache[y]=await fetchHolidayYear(y,key);
+  }
+  saveHolCache(cache);
+  refreshHolidayMerge();
+  return {ok:true, fetched:missing};
+}
+
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function dateKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function parseKey(k){ const [y,m,dd]=k.split("-").map(Number); return new Date(y,m-1,dd); }
+
+/* ---- 읽기 계획(plan) ---- */
+function defaultPlan(){
+  const t=new Date(); const start=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  return {
+    start: dateKey(start),
+    end: dateKey(addDays(start,149)),   // 기본 150일
+    order: "ot",                        // ot=구약 먼저, nt=신약 먼저
+    mid: "",                            // 1단계 만료일 (빈값=글자수 비례 자동)
+    sat:false, sun:false, hol:false     // 포함 여부 (기본: 기존 정책대로 제외)
+  };
+}
+function getPlan(){
+  try{
+    const p=JSON.parse(localStorage.getItem("btr2-plan"));
+    if(p && p.start && p.end) return {...defaultPlan(), ...p};
+  }catch(e){}
+  return defaultPlan();
+}
+function savePlan(p){ localStorage.setItem("btr2-plan", JSON.stringify(p)); }
+
+let PLAN=getPlan();
+
+function isRestDay(d){
+  const w=d.getDay();
+  if(w===6 && !PLAN.sat) return true;
+  if(w===0 && !PLAN.sun) return true;
+  if(HOLIDAYS[dateKey(d)] && !PLAN.hol) return true;
+  return false;
+}
+function restLabel(d){
+  const h=HOLIDAYS[dateKey(d)];
+  const w=d.getDay();
+  if(h && !PLAN.hol) return h;
+  return w===0?"일요일":"토요일";
+}
+function readingDates(start,end){
+  const arr=[];
+  for(let d=new Date(start); d<=end; d=addDays(d,1)){
+    if(!isRestDay(d)) arr.push(new Date(d));
+  }
+  return arr;
+}
+
+// 읽을 장 목록 만들기 (verses: 절수, chars: 개역한글 글자수)
+function buildChapters(){
+  const chapters=[];
+  BIBLE.ot.forEach(([name,id,vv,cc])=>{
+    vv.forEach((v,i)=>{
+      const ch=i+1;
+      if(id==="ps" && ch<PS_FROM) return;
+      chapters.push({book:name,id,ch,verses:v,chars:cc[i],testament:"ot"});
+    });
+  });
+  BIBLE.nt.forEach(([name,id,vv,cc])=>{
+    vv.forEach((v,i)=>{
+      chapters.push({book:name,id,ch:i+1,verses:v,chars:cc[i],testament:"nt"});
+    });
+  });
+  return chapters;
+}
+
+// 하루씩 그리디 배분: 글자수 기준으로 매일 남은 분량/남은 일수를 채움 (최소 1장 보장)
+function assignDays(list,numDays){
+  const days=[]; let idx=0;
+  let remainChars=list.reduce((s,c)=>s+c.chars,0);
+  for(let d=0; d<numDays; d++){
+    const remainDays=numDays-d;
+    const target=remainChars/remainDays;
+    const day=[]; let acc=0;
+    while(idx<list.length){
+      const c=list[idx];
+      if(day.length>0 && acc+c.chars/2>target) break;      // 절반 이상 초과하면 다음날로
+      if(list.length-idx-1 < numDays-d-1) break;            // 남은 날 최소 1장 보장
+      day.push(idx); acc+=c.chars; idx++;
+      if(acc>=target) break;
+    }
+    if(day.length===0 && idx<list.length){ day.push(idx); acc=list[idx].chars; idx++; }
+    remainChars-=acc;
+    days.push(day);
+  }
+  // 남은 장이 있으면 마지막 날에 붙임
+  while(idx<list.length){ days[days.length-1].push(idx); idx++; }
+  return days;
+}
+
+const ALL=buildChapters();
+const OT_LIST=ALL.filter(c=>c.testament==="ot");
+const NT_LIST=ALL.filter(c=>c.testament==="nt");
+const TOTAL_CHARS=ALL.reduce((s,c)=>s+c.chars,0);
+const OT_CHARS=OT_LIST.reduce((s,c)=>s+c.chars,0);
+
+let SCHEDULE=[], SCHED_BY_KEY={}, FIRST_CHARS=OT_CHARS, PHASE_INFO=null;
+
+// 1단계 만료일 자동 계산: 글자수 비례로 읽기일을 나눔
+function autoMidKey(){
+  const dates=readingDates(parseKey(PLAN.start), parseKey(PLAN.end));
+  if(dates.length<2) return PLAN.end;
+  const firstChars=(PLAN.order==="ot"?OT_CHARS:TOTAL_CHARS-OT_CHARS);
+  let n=Math.round(dates.length*firstChars/TOTAL_CHARS);
+  n=Math.max(1,Math.min(dates.length-1,n));
+  return dateKey(dates[n-1]);
+}
+
+function rebuildSchedule(){
+  PLAN=getPlan();
+  const start=parseKey(PLAN.start), end=parseKey(PLAN.end);
+  const midKey=PLAN.mid || autoMidKey();
+  let mid=parseKey(midKey);
+  if(mid<start) mid=start;
+  if(mid>end) mid=end;
+
+  const firstList = PLAN.order==="ot" ? OT_LIST : NT_LIST;
+  const secondList= PLAN.order==="ot" ? NT_LIST : OT_LIST;
+  FIRST_CHARS=firstList.reduce((s,c)=>s+c.chars,0);
+
+  let d1=readingDates(start,mid);
+  let d2=readingDates(addDays(mid,1),end);
+  // 각 단계 최소 1일 보장
+  if(!d1.length && d2.length){ d1=[d2[0]]; d2=d2.slice(1); }
+  if(!d2.length && d1.length>1){ d2=[d1[d1.length-1]]; d1=d1.slice(0,-1); }
+  if(!d1.length||!d2.length){ SCHEDULE=[]; SCHED_BY_KEY={}; PHASE_INFO=null; return false; }
+
+  SCHEDULE=[];
+  assignDays(firstList,d1.length).forEach((idxs,i)=>{
+    const chs=idxs.map(x=>firstList[x]);
+    SCHEDULE.push({date:d1[i],testament:firstList[0].testament,chapters:chs,
+      verses:chs.reduce((s,c)=>s+c.verses,0),chars:chs.reduce((s,c)=>s+c.chars,0)});
+  });
+  assignDays(secondList,d2.length).forEach((idxs,i)=>{
+    const chs=idxs.map(x=>secondList[x]);
+    SCHEDULE.push({date:d2[i],testament:secondList[0].testament,chapters:chs,
+      verses:chs.reduce((s,c)=>s+c.verses,0),chars:chs.reduce((s,c)=>s+c.chars,0)});
+  });
+  SCHEDULE.forEach((s,i)=>{ s.key=dateKey(s.date); s.index=i; });
+  SCHED_BY_KEY={};
+  SCHEDULE.forEach(s=>{ SCHED_BY_KEY[s.key]=s; });
+  PHASE_INFO={
+    firstName: PLAN.order==="ot"?"구약":"신약",
+    secondName: PLAN.order==="ot"?"신약":"구약",
+    firstEnd: d1[d1.length-1], finalEnd: d2[d2.length-1],
+    firstDays: d1.length, secondDays: d2.length,
+    midKey: dateKey(d1[d1.length-1])
+  };
+  const ticks=document.getElementById("journeyTicks");
+  if(ticks){ ticks.innerHTML=""; delete ticks.dataset.built; }
+  return true;
+}
+rebuildSchedule();
+
+/* ============================================================
+   저장소
+============================================================ */
+const store={
+  get read(){ try{return JSON.parse(localStorage.getItem("btr2-read")||"{}")}catch(e){return{}} },
+  set read(v){ localStorage.setItem("btr2-read",JSON.stringify(v)) },
+  get settings(){ try{return JSON.parse(localStorage.getItem("btr2-set")||"{}")}catch(e){return{}} },
+  set settings(v){ localStorage.setItem("btr2-set",JSON.stringify(v)) }
+};
+function chKey(c){ return c.id+"-"+c.ch; }
+function isRead(c){ return !!store.read[chKey(c)]; }
+function setRead(c,val){
+  const r=store.read;
+  if(val) r[chKey(c)]=1; else delete r[chKey(c)];
+  store.read=r;
+}
+function dayDone(sch){ return sch.chapters.every(isRead); }
+function dayReadCount(sch){ return sch.chapters.filter(isRead).length; }
+
+/* ============================================================
+   날짜/뷰 상태
+============================================================ */
+function todayDate(){ const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
+function isTodayRest(){ if(!SCHEDULE.length) return false; const t=todayDate(); return t>=SCHEDULE[0].date && t<=SCHEDULE[SCHEDULE.length-1].date && isRestDay(t); }
+function todayIndex(){
+  const t=todayDate();
+  if(t<SCHEDULE[0].date) return 0;
+  if(t>SCHEDULE[SCHEDULE.length-1].date) return SCHEDULE.length-1;
+  const exact=SCHED_BY_KEY[dateKey(t)];
+  if(exact) return exact.index;
+  // 쉬는 날: 다음 읽기일로
+  const next=SCHEDULE.find(s=>s.date>t);
+  return next?next.index:SCHEDULE.length-1;
+}
+let viewIndex=todayIndex();
+
+const FMT_DAY=new Intl.DateTimeFormat("ko-KR",{month:"long",day:"numeric",weekday:"short"});
+const FMT_FULL=new Intl.DateTimeFormat("ko-KR",{year:"numeric",month:"long",day:"numeric",weekday:"long"});
+
+function rangeLabel(sch){
+  const f=sch.chapters[0], l=sch.chapters[sch.chapters.length-1];
+  if(f.id===l.id){
+    return f.ch===l.ch ? `${f.book} ${f.ch}장` : `${f.book} ${f.ch}–${l.ch}장`;
+  }
+  return `${f.book} ${f.ch}장 → ${l.book} ${l.ch}장`;
+}
+
+/* ============================================================
+   렌더링
+============================================================ */
+const $=id=>document.getElementById(id);
+
+function render(){
+  const ti=todayIndex();
+  const sch=SCHEDULE[viewIndex];
+  const isNT=sch.testament==="nt";
+  document.body.classList.toggle("nt-phase-ui",isNT);
+  $("appHeader").classList.toggle("nt-phase",SCHEDULE[ti].testament==="nt");
+
+  // 헤더
+  $("hDate").textContent=FMT_FULL.format(new Date());
+  const t0=new Date(new Date().setHours(0,0,0,0));
+  const firstLeft=Math.max(0,daysBetween(t0,PHASE_INFO.firstEnd));
+  const finalLeft=Math.max(0,daysBetween(t0,PHASE_INFO.finalEnd));
+  const inFirst = SCHEDULE[ti].testament===SCHEDULE[0].testament && ti<PHASE_INFO.firstDays;
+  $("hDday").innerHTML = inFirst
+    ? `${PHASE_INFO.firstName} 완독까지 <b>D-${firstLeft}</b><br>${PHASE_INFO.secondName} 완독까지 D-${finalLeft}`
+    : `${PHASE_INFO.secondName} 완독까지 <b>D-${finalLeft}</b>`;
+  // 여정 라벨
+  const fmtMD=d=>`${d.getMonth()+1}/${d.getDate()}`;
+  const firstCh=SCHEDULE[0].chapters[0], lastCh=SCHEDULE[SCHEDULE.length-1].chapters.slice(-1)[0];
+  $("journeyStart").textContent=`${firstCh.book} ${firstCh.ch}장`;
+  $("journeyPhaseLabel").textContent=`${PHASE_INFO.firstName} · ${fmtMD(PHASE_INFO.firstEnd)}`;
+  $("journeyEnd").textContent=`${lastCh.book} · ${fmtMD(PHASE_INFO.finalEnd)}`;
+
+  // 여정 리본
+  renderJourney(ti);
+
+  // 날짜 네비 (달력 날짜 기준 상대 표기)
+  $("navDate").textContent=FMT_DAY.format(sch.date);
+  const dayDiff=daysBetween(todayDate(),sch.date);
+  $("navRel").textContent = dayDiff===0?"오늘":(dayDiff===-1?"어제":(dayDiff===1?"내일":(dayDiff<0?`${-dayDiff}일 전`:`${dayDiff}일 후`)));
+  $("btnToday").classList.toggle("show",viewIndex!==ti);
+  $("btnPrev").disabled = viewIndex===0;
+  $("btnNext").disabled = viewIndex===SCHEDULE.length-1;
+
+  // 쉬는 날 배너
+  const restB=$("restBanner");
+  if(isTodayRest()){
+    restB.innerHTML=`🌿 오늘은 <b>${restLabel(todayDate())}</b>, 읽기 일정이 없는 쉬는 날입니다.<br>다음 일정은 <b>${FMT_DAY.format(SCHEDULE[ti].date)}</b>이에요. 물론 미리 읽고 체크해 두셔도 좋습니다.`;
+    restB.classList.add("show");
+  } else restB.classList.remove("show");
+
+  // 오늘 카드
+  const done=dayReadCount(sch), total=sch.chapters.length;
+  const pct=total?Math.round(done/total*100):0;
+  $("ringPct").textContent=pct+"%";
+  $("ringSub").textContent=`${done}/${total}장`;
+  const C=238.76;
+  const ring=$("ringFg");
+  ring.style.strokeDashoffset=C*(1-done/total);
+  ring.classList.toggle("done",done===total);
+  $("todayRange").textContent=rangeLabel(sch);
+  $("todayMeta").textContent=`${isNT?"신약":"구약"} · ${FMT_DAY.format(sch.date)} 분량 · 약 ${sch.chars.toLocaleString()}자`;
+  $("dayBadge").classList.toggle("show",done===total);
+
+  // 오늘 분량 요약 (장/절/글자수)
+  let readV=0, readC=0;
+  sch.chapters.forEach(c=>{ if(isRead(c)){ readV+=c.verses; readC+=c.chars; } });
+  const leftCh=total-done, leftV=sch.verses-readV, leftC=sch.chars-readC;
+  $("tsTotal").innerHTML=`${total}장 <small>· ${sch.verses}절</small>`;
+  $("tsRead").innerHTML=`${done}장 <small>· ${readC.toLocaleString()}자</small>`;
+  const tsLeft=$("tsLeft");
+  tsLeft.innerHTML = leftCh===0 ? "완료 ✦" : `${leftCh}장 <small>· ${leftC.toLocaleString()}자</small>`;
+  tsLeft.classList.toggle("zero",leftCh===0);
+
+  // 장 리스트
+  const list=$("chapterList");
+  list.innerHTML="";
+  const hint=document.createElement("div");
+  hint.className="drag-hint";
+  hint.innerHTML="💡 <b>체크박스를 누른 채 아래로 쓸어내리면</b> 여러 장이 한 번에 체크됩니다. (장을 길게 눌러도 드래그 체크 시작)";
+  list.appendChild(hint);
+  let lastBook=null;
+  sch.chapters.forEach((c,ci)=>{
+    if(c.book!==lastBook){
+      const lbl=document.createElement("div");
+      lbl.className="book-group-label"; lbl.textContent=c.book;
+      list.appendChild(lbl); lastBook=c.book;
+    }
+    const item=document.createElement("div");
+    item.className="chapter-item"+(isRead(c)?" checked":"");
+    item.dataset.ci=ci;
+    item.setAttribute("role","checkbox");
+    item.setAttribute("aria-checked",isRead(c));
+    item.tabIndex=0;
+    item.innerHTML=`
+      <div class="chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="ch-name">${c.book} ${c.ch}장</div>
+      <div class="ch-verses">${c.verses}절</div>
+      <button class="ch-play" aria-label="${c.book} ${c.ch}장 읽어주기">🔊</button>`;
+    item.querySelector(".ch-play").addEventListener("click",e=>{
+      e.stopPropagation();
+      openReader(ci);
+    });
+    const toggle=(e)=>{
+      if(e && e.target && e.target.closest && e.target.closest(".ch-play")) return;
+      if(suppressClick){ suppressClick=false; return; }
+      const was=dayDone(sch);
+      setRead(c,!isRead(c));
+      render();
+      syncToSW();
+      if(!was && dayDone(sch)){
+        toast("🎉 오늘 분량을 모두 읽었습니다!");
+        if(navigator.vibrate) navigator.vibrate([60,40,60]);
+      }
+    };
+    item.addEventListener("click",toggle);
+    item.addEventListener("keydown",e=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle(e);} });
+    list.appendChild(item);
+  });
+  $("btnCheckAll").textContent = dayDone(sch)?"전체 해제":"전체 체크";
+
+  // 밀림 배너
+  renderBehind(ti);
+  // 일정 탭 통계
+  renderStats();
+}
+
+function renderJourney(ti){
+  // 글자수 기준 전체 진행률
+  let readChars=0;
+  ALL.forEach(c=>{ if(isRead(c)) readChars+=c.chars; });
+  const pct=readChars/TOTAL_CHARS*100;
+  $("journeyFill").style.width=pct+"%";
+
+  // 책 경계 눈금 + 1/2단계 구분선 (읽기 순서 기준)
+  const ticks=$("journeyTicks");
+  if(!ticks.dataset.built){
+    const seq = PLAN.order==="ot" ? [...BIBLE.ot,...BIBLE.nt] : [...BIBLE.nt,...BIBLE.ot];
+    let cum=0;
+    const frag=document.createDocumentFragment();
+    seq.forEach(([name,id,vv,cc])=>{
+      cum+=cc.reduce((a,b)=>a+b,0);
+      if(cum<TOTAL_CHARS){
+        const t=document.createElement("div");
+        t.className="journey-tick"; t.style.left=(cum/TOTAL_CHARS*100)+"%";
+        frag.appendChild(t);
+      }
+    });
+    const div=document.createElement("div");
+    div.className="journey-nt-divider"; div.style.left=(FIRST_CHARS/TOTAL_CHARS*100)+"%";
+    frag.appendChild(div);
+    ticks.appendChild(frag);
+    ticks.dataset.built="1";
+  }
+
+  // 오늘 위치 마커 (일정상 오늘까지 읽어야 할 글자수 위치)
+  let schedC=0;
+  for(let i=0;i<=ti;i++) schedC+=SCHEDULE[i].chars;
+  $("journeyToday").style.left=`calc(${Math.min(100,schedC/TOTAL_CHARS*100)}% - 2px)`;
+
+  const behindC=schedC-readChars;
+  $("journeyCaption").textContent = behindC<=0
+    ? `전체 ${Math.round(pct)}% · 일정보다 앞서 있어요 ✦`
+    : `전체 ${Math.round(pct)}% · 흰 눈금이 오늘 목표 지점입니다`;
+}
+
+function renderBehind(ti){
+  // 오늘 이전 날짜 중 안 읽은 장
+  let behindCh=0, firstMiss=null;
+  for(let i=0;i<ti;i++){
+    SCHEDULE[i].chapters.forEach(c=>{
+      if(!isRead(c)){ behindCh++; if(!firstMiss) firstMiss={sch:SCHEDULE[i],c}; }
+    });
+  }
+  const b=$("behindBanner");
+  if(behindCh>0){
+    b.innerHTML=`📖 밀린 분량이 <b>${behindCh}장</b> 있습니다. <b>${firstMiss.c.book} ${firstMiss.c.ch}장</b>(${FMT_DAY.format(firstMiss.sch.date)})부터 따라잡아 보세요. <u style="cursor:pointer">이동하기</u>`;
+    b.classList.add("show");
+    b.querySelector("u").onclick=()=>{ viewIndex=firstMiss.sch.index; render(); };
+  } else b.classList.remove("show");
+}
+
+function renderStats(){
+  let otRead=0, ntRead=0, doneDays=0;
+  OT_LIST.forEach(c=>{ if(isRead(c)) otRead+=c.chars; });
+  NT_LIST.forEach(c=>{ if(isRead(c)) ntRead+=c.chars; });
+  SCHEDULE.forEach(s=>{ if(dayDone(s)) doneDays++; });
+  $("statOt").textContent=Math.round(otRead/OT_CHARS*100)+"%";
+  $("statNt").textContent=Math.round(ntRead/(TOTAL_CHARS-OT_CHARS)*100)+"%";
+  $("statDays").textContent=doneDays+"일";
+}
+
+function renderSchedule(){
+  const wrap=$("scheduleList");
+  wrap.innerHTML="";
+  const ti=todayIndex();
+  const tKey=dateKey(todayDate());
+  let curMonth=null, card=null;
+  SCHEDULE.forEach(s=>{
+    const m=s.date.getMonth();
+    if(m!==curMonth){
+      curMonth=m;
+      const ml=document.createElement("div");
+      ml.className="month-label"; ml.textContent=`${s.date.getFullYear()}년 ${m+1}월`;
+      wrap.appendChild(ml);
+      card=document.createElement("div"); card.className="card"; card.style.padding="6px 8px";
+      wrap.appendChild(card);
+    }
+    const done=dayReadCount(s), total=s.chapters.length;
+    const row=document.createElement("div");
+    row.className="sched-day"+(s.index===ti?" today-row":"");
+    if(s.index===ti) row.id="todayRow";
+    const st = done===total?"done":(done>0?"partial":"");
+    row.innerHTML=`
+      <div class="sd-status ${st}">${done===total?"✓":(done>0?done:"")}</div>
+      <div class="sd-body">
+        <div class="sd-date">${FMT_DAY.format(s.date)}${s.key===tKey?" · 오늘":""}</div>
+        <div class="sd-range">${rangeLabel(s)} <span style="color:var(--ink-soft);font-size:.75rem">(${total}장)</span></div>
+      </div>
+      <div class="sd-tag ${s.testament}">${s.testament==="ot"?"구약":"신약"}</div>`;
+    row.onclick=()=>{ viewIndex=s.index; switchTab("today"); render(); window.scrollTo(0,0); };
+    card.appendChild(row);
+  });
+}
+
+/* ============================================================
+   탭 / 네비게이션
+============================================================ */
+function scrollToTodayRow(smooth){
+  // 렌더 직후 두 프레임 대기 후 오늘 행을 화면 중앙으로
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const r=$("todayRow");
+    if(!r) return;
+    const y=r.getBoundingClientRect().top + window.scrollY - window.innerHeight/2 + r.offsetHeight/2;
+    window.scrollTo({top:Math.max(0,y), behavior:smooth?"smooth":"auto"});
+  }));
+}
+function switchTab(name){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+  document.querySelectorAll(".tab-page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
+  if(name==="schedule"){
+    renderSchedule();
+    scrollToTodayRow(false);
+  } else {
+    window.scrollTo(0,0);
+  }
+}
+document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+$("btnJumpToday").onclick=()=>scrollToTodayRow(true);
+$("btnPrev").onclick=()=>{ if(viewIndex>0){viewIndex--;render();} };
+$("btnNext").onclick=()=>{ if(viewIndex<SCHEDULE.length-1){viewIndex++;render();} };
+$("btnToday").onclick=()=>{ viewIndex=todayIndex(); render(); };
+$("btnCheckAll").onclick=()=>{
+  const sch=SCHEDULE[viewIndex];
+  const target=!dayDone(sch);
+  sch.chapters.forEach(c=>setRead(c,target));
+  render(); syncToSW();
+  if(target) toast("🎉 오늘 분량을 모두 읽었습니다!");
+};
+$("btnReset").onclick=()=>{
+  if(confirm("모든 읽기 기록을 삭제할까요? 되돌릴 수 없습니다.")){
+    localStorage.removeItem("btr2-read");
+    render(); syncToSW();
+    toast("기록이 초기화되었습니다");
+  }
+};
+
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),2500);
+}
+
+/* ============================================================
+   드래그로 여러 장 연속 체크
+   - 체크박스에서 시작: 즉시 드래그 체크 모드
+   - 장 항목 길게 누르기(300ms): 드래그 체크 모드 진입
+   - 첫 장의 반대 상태를 지나가는 모든 장에 적용
+============================================================ */
+let suppressClick=false;
+let drag=null; // {active, moved, target, applied:Set, startX, startY, longTimer}
+const chListEl=$("chapterList");
+
+function itemFromPoint(x,y){
+  const el=document.elementFromPoint(x,y);
+  return el ? el.closest(".chapter-item") : null;
+}
+function dragApply(item){
+  if(!item || drag.applied.has(item)) return;
+  drag.applied.add(item);
+  const c=SCHEDULE[viewIndex].chapters[+item.dataset.ci];
+  setRead(c,drag.target);
+  item.classList.toggle("checked",drag.target);
+  item.setAttribute("aria-checked",drag.target);
+}
+function dragStart(originItem){
+  const c=SCHEDULE[viewIndex].chapters[+originItem.dataset.ci];
+  drag.active=true;
+  drag.target=!isRead(c);
+  chListEl.classList.add("dragging");
+  dragApply(originItem);
+  if(navigator.vibrate) navigator.vibrate(30);
+}
+chListEl.addEventListener("pointerdown",e=>{
+  if(e.target.closest(".ch-play")) return;
+  const item=e.target.closest(".chapter-item");
+  if(!item) return;
+  drag={active:false,moved:false,applied:new Set(),startX:e.clientX,startY:e.clientY};
+  if(e.target.closest(".chk")){
+    e.preventDefault();          // 체크박스: 바로 드래그 모드
+    dragStart(item);
+  }else{
+    drag.longTimer=setTimeout(()=>{ if(drag && !drag.moved) dragStart(item); },300);
+  }
+});
+chListEl.addEventListener("pointermove",e=>{
+  if(!drag) return;
+  if(!drag.active){
+    if(Math.hypot(e.clientX-drag.startX, e.clientY-drag.startY)>10){
+      drag.moved=true; clearTimeout(drag.longTimer);   // 스크롤로 판단
+    }
+    return;
+  }
+  dragApply(itemFromPoint(e.clientX,e.clientY));
+});
+function dragEnd(){
+  if(!drag) return;
+  clearTimeout(drag.longTimer);
+  const wasActive=drag.active, count=drag.applied.size, target=drag.target;
+  drag=null;
+  chListEl.classList.remove("dragging");
+  if(!wasActive) return;
+  suppressClick=true;
+  setTimeout(()=>{ suppressClick=false; },50);
+  const sch=SCHEDULE[viewIndex];
+  const nowDone=dayDone(sch);
+  render(); syncToSW();
+  if(target && nowDone){
+    toast("🎉 오늘 분량을 모두 읽었습니다!");
+    if(navigator.vibrate) navigator.vibrate([60,40,60]);
+  }else if(count>1){
+    toast(count+"장 "+(target?"체크했습니다":"해제했습니다"));
+  }
+}
+chListEl.addEventListener("pointerup",dragEnd);
+chListEl.addEventListener("pointercancel",dragEnd);
+// 드래그 체크 중에는 화면 스크롤 방지
+chListEl.addEventListener("touchmove",e=>{ if(drag && drag.active) e.preventDefault(); },{passive:false});
+
+/* ============================================================
+   개역한글 읽어주기 — MP3 낭독 음원 우선, 없으면 기기 TTS 폴백
+============================================================ */
+const AUDIO_BASE="audio/";   // 음원을 별도 저장소에 올리면 전체 URL로 변경
+let KRV=null, krvLoading=null;
+function loadKRV(){
+  if(KRV) return Promise.resolve(KRV);
+  if(krvLoading) return krvLoading;
+  toast("본문을 불러오는 중...");
+  krvLoading=fetch("krv.json").then(r=>{
+    if(!r.ok) throw new Error("load fail");
+    return r.json();
+  }).then(j=>{ KRV=j; return j; })
+    .catch(e=>{ krvLoading=null; toast("본문을 불러오지 못했습니다. 인터넷 연결을 확인하세요."); throw e; });
+  return krvLoading;
+}
+
+const reader={ open:false, queue:[], qi:0, vi:0, playing:false, wakeLock:null, mode:null, token:0 };
+const audioEl=new Audio();
+audioEl.preload="auto";
+const mp3Dead={};   // 성별별: 음원 404 시 세션 내 재시도 방지
+
+function voiceGender(){ return store.settings.voiceGender || "female"; }
+function ttsRate(){ return parseFloat($("rdRate").value); }
+function audioUrl(c){ return AUDIO_BASE+voiceGender()+"/"+c.id+"-"+c.ch+".mp3"; }
+
+function koVoice(){
+  const vs=speechSynthesis.getVoices();
+  return vs.find(v=>/^ko/i.test(v.lang)) || null;
+}
+if("speechSynthesis" in window){ speechSynthesis.onvoiceschanged=()=>{}; }
+
+async function openReader(startCi){
+  try{ await loadKRV(); }catch(e){ return; }
+  const sch=SCHEDULE[viewIndex];
+  reader.queue=sch.chapters;
+  reader.qi=Math.max(0,Math.min(startCi,sch.chapters.length-1));
+  reader.vi=0;
+  reader.open=true;
+  $("rdVoice").value=voiceGender();
+  $("reader").hidden=false;
+  renderReaderChapter();
+}
+
+function readerChapter(){ return reader.queue[reader.qi]; }
+function readerVerses(){
+  const c=readerChapter();
+  return (KRV[c.id] && KRV[c.id][String(c.ch)]) || [];
+}
+
+function renderReaderChapter(){
+  const c=readerChapter();
+  $("rdTitle").textContent=`${c.book} ${c.ch}장 (${reader.qi+1}/${reader.queue.length})`;
+  const body=$("rdBody");
+  body.innerHTML="";
+  readerVerses().forEach((v,i)=>{
+    const p=document.createElement("p");
+    p.className="rd-verse"; p.id="rdv-"+i;
+    p.innerHTML=`<span class="vn">${i+1}</span>${v}`;
+    body.appendChild(p);
+  });
+  body.scrollTop=0;
+  updatePlayBtn();
+}
+
+function highlightVerse(i){
+  document.querySelectorAll(".rd-verse.now").forEach(el=>el.classList.remove("now"));
+  const el=$("rdv-"+i);
+  if(el){ el.classList.add("now"); el.scrollIntoView({block:"center",behavior:"smooth"}); }
+}
+
+/* ---- MP3 재생: 글자수 비율로 현재 절 근사 하이라이트 ---- */
+function verseEndFractions(){
+  const vs=readerVerses();
+  const lens=vs.map(v=>v.length);
+  const tot=lens.reduce((a,b)=>a+b,0)||1;
+  let cum=0;
+  return lens.map(l=>{ cum+=l; return cum/tot; });
+}
+audioEl.addEventListener("timeupdate",()=>{
+  if(reader.mode!=="mp3" || !audioEl.duration) return;
+  const f=audioEl.currentTime/audioEl.duration;
+  const fr=verseEndFractions();
+  let i=fr.findIndex(x=>f<x);
+  if(i<0) i=fr.length-1;
+  if(i!==reader.vi){ reader.vi=i; highlightVerse(i); }
+});
+audioEl.addEventListener("ended",()=>{ if(reader.mode==="mp3" && reader.playing) chapterDone(); });
+
+/* ---- 로컬 음원 저장소 (IndexedDB) ---- */
+function adbOpen(){
+  return new Promise((res,rej)=>{
+    const rq=indexedDB.open("btr-audio",1);
+    rq.onupgradeneeded=()=>rq.result.createObjectStore("files");
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error);
+  });
+}
+async function audioPut(key,blob){
+  const db=await adbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction("files","readwrite");
+    tx.objectStore("files").put(blob,key);
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
+  });
+}
+async function audioGet(key){
+  const db=await adbOpen();
+  return new Promise((res,rej)=>{
+    const rq=db.transaction("files","readonly").objectStore("files").get(key);
+    rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error);
+  });
+}
+async function audioKeys(){
+  const db=await adbOpen();
+  return new Promise((res,rej)=>{
+    const rq=db.transaction("files","readonly").objectStore("files").getAllKeys();
+    rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>rej(rq.error);
+  });
+}
+async function audioClearAll(){
+  const db=await adbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction("files","readwrite");
+    tx.objectStore("files").clear();
+    tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);
+  });
+}
+
+async function tryMp3(){
+  reader.mode="mp3";
+  const c=readerChapter();
+  const key=voiceGender()+"/"+c.id+"-"+c.ch;
+  const resume = audioEl.dataset.key===key && audioEl.currentTime>0 && !audioEl.ended;
+  if(!resume){
+    if(audioEl.dataset.blobUrl){ URL.revokeObjectURL(audioEl.dataset.blobUrl); delete audioEl.dataset.blobUrl; }
+    audioEl.dataset.key=key;
+    const blob=await audioGet(key).catch(()=>null);   // 1순위: 폰에 저장된 음원
+    if(blob){
+      const bu=URL.createObjectURL(blob);
+      audioEl.dataset.blobUrl=bu;
+      audioEl.src=bu;
+    }else{
+      audioEl.src=audioUrl(c);                        // 2순위: 웹(깃허브) 음원
+    }
+  }
+  if(!reader.playing) return;
+  audioEl.playbackRate=ttsRate();
+  audioEl.onerror=()=>{ if(reader.playing) fallbackTTS(true); };
+  audioEl.play().catch(()=>{ if(reader.playing) fallbackTTS(true); });
+}
+
+/* ---- TTS 폴백 ---- */
+function fallbackTTS(markDead){
+  if(reader.mode==="tts") return;   // error 이벤트 + play() 실패 동시 발생 시 중복 방지
+  if(markDead && !mp3Dead[voiceGender()]){
+    mp3Dead[voiceGender()]=true;
+    toast("낭독 음원을 찾지 못해 기기 음성으로 재생합니다");
+  }
+  if(!("speechSynthesis" in window)){
+    stopPlayback(); toast("이 브라우저는 음성 재생을 지원하지 않습니다"); return;
+  }
+  reader.mode="tts";
+  speakFrom(reader.vi||0);
+}
+function speakFrom(vi){
+  const verses=readerVerses();
+  if(vi>=verses.length){ chapterDone(); return; }
+  reader.vi=vi;
+  highlightVerse(vi);
+  const u=new SpeechSynthesisUtterance(verses[vi]);
+  u.lang="ko-KR";
+  const v=koVoice(); if(v) u.voice=v;
+  u.rate=ttsRate();
+  const tk=reader.token;
+  u.onend=()=>{ if(tk===reader.token && reader.playing && reader.mode==="tts") speakFrom(vi+1); };
+  u.onerror=()=>{ if(tk===reader.token && reader.playing && reader.mode==="tts") speakFrom(vi+1); };
+  speechSynthesis.speak(u);
+}
+
+/* ---- 공통 제어 ---- */
+function chapterDone(){
+  const c=readerChapter();
+  if(!isRead(c)){ setRead(c,true); render(); syncToSW(); }
+  if(reader.qi+1<reader.queue.length){
+    reader.qi++; reader.vi=0;
+    delete audioEl.dataset.key;
+    renderReaderChapter();
+    if(reader.playing) startPlayback();
+  }else{
+    stopPlayback();
+    toast("🎉 오늘 분량 읽어주기 완료!");
+    if(navigator.vibrate) navigator.vibrate([60,40,60]);
+  }
+}
+async function startPlayback(){
+  reader.playing=true;
+  reader.token++;
+  reader.mode=null;
+  updatePlayBtn();
+  speechSynthesis.cancel();
+  if(mp3Dead[voiceGender()]) fallbackTTS(false);
+  else tryMp3();
+  try{ reader.wakeLock=await navigator.wakeLock.request("screen"); }catch(e){}
+}
+function stopPlayback(keepPos){
+  reader.playing=false;
+  reader.token++;
+  updatePlayBtn();
+  audioEl.pause();
+  if(!keepPos){ delete audioEl.dataset.key; try{audioEl.currentTime=0;}catch(e){} }
+  speechSynthesis.cancel();
+  if(reader.wakeLock){ reader.wakeLock.release().catch(()=>{}); reader.wakeLock=null; }
+}
+function updatePlayBtn(){
+  $("rdPlay").textContent = reader.playing ? "⏸ 일시정지" : "▶ 재생";
+}
+function jumpChapter(delta){
+  const t=reader.qi+delta;
+  if(t<0 || t>=reader.queue.length) return;
+  reader.qi=t; reader.vi=0;
+  delete audioEl.dataset.key;
+  renderReaderChapter();
+  if(reader.playing){ speechSynthesis.cancel(); audioEl.pause(); startPlayback(); }
+}
+
+$("rdPlay").onclick=()=>{ reader.playing ? stopPlayback(true) : startPlayback(); };
+$("rdPrev").onclick=()=>jumpChapter(-1);
+$("rdNext").onclick=()=>jumpChapter(1);
+$("rdRate").onchange=()=>{
+  if(reader.mode==="mp3"){ audioEl.playbackRate=ttsRate(); }
+  else if(reader.playing){ reader.token++; speechSynthesis.cancel(); speakFrom(reader.vi); }
+};
+$("rdVoice").onchange=()=>{
+  const s=store.settings; s.voiceGender=$("rdVoice").value; store.settings=s;
+  const was=reader.playing;
+  stopPlayback(false);
+  reader.vi=0;
+  toast(($("rdVoice").value==="male"?"남성":"여성")+" 음성으로 변경");
+  if(was) startPlayback();
+};
+$("rdClose").onclick=()=>{
+  stopPlayback(false);
+  reader.open=false;
+  $("reader").hidden=true;
+};
+$("btnListenDay").onclick=()=>{
+  const sch=SCHEDULE[viewIndex];
+  let start=sch.chapters.findIndex(c=>!isRead(c));
+  if(start<0) start=0;
+  openReader(start).then(()=>{ if(reader.open) startPlayback(); });
+};
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden && reader.playing && !reader.wakeLock){
+    navigator.wakeLock?.request("screen").then(w=>reader.wakeLock=w).catch(()=>{});
+  }
+});
+
+/* ---- 음원 가져오기 / 관리 ---- */
+async function refreshAudioStatus(){
+  try{
+    const keys=await audioKeys();
+    const f=keys.filter(k=>k.startsWith("female/")).length;
+    const m=keys.filter(k=>k.startsWith("male/")).length;
+    let usage="";
+    if(navigator.storage?.estimate){
+      const est=await navigator.storage.estimate();
+      usage=` · 사용 용량 약 ${Math.round((est.usage||0)/1024/1024)}MB`;
+    }
+    $("audioStatus").textContent = (f||m)
+      ? `저장된 음원: 여성 ${f}개 / 남성 ${m}개 (전체 684개)${usage}`
+      : "저장된 음원이 없습니다. 음원이 없으면 웹 음원 또는 기기 음성으로 재생됩니다.";
+  }catch(e){ $("audioStatus").textContent=""; }
+}
+async function importAudio(gender, files){
+  if(!files || !files.length) return;
+  try{ await navigator.storage?.persist?.(); }catch(e){}
+  let ok=0, skip=0;
+  toast("음원 저장 중... 화면을 끄지 마세요");
+  for(const f of files){
+    const mm=f.name.match(/^([a-z0-9]+)-(\d+)\.mp3$/i);
+    if(!mm){ skip++; continue; }
+    try{
+      await audioPut(gender+"/"+mm[1].toLowerCase()+"-"+(+mm[2]), f);
+      ok++;
+      if(ok%100===0) toast(`저장 중... ${ok}/${files.length}`);
+    }catch(e){
+      toast("저장 공간이 부족하거나 오류가 발생했습니다 ("+ok+"개 저장됨)");
+      break;
+    }
+  }
+  delete mp3Dead[gender];
+  toast(`완료: ${ok}개 저장${skip?`, ${skip}개 파일명 인식 불가`:""}`);
+  refreshAudioStatus();
+}
+$("btnImportF").onclick=()=>$("fileImportF").click();
+$("btnImportM").onclick=()=>$("fileImportM").click();
+$("fileImportF").onchange=e=>{ importAudio("female", e.target.files); e.target.value=""; };
+$("fileImportM").onchange=e=>{ importAudio("male", e.target.files); e.target.value=""; };
+$("btnAudioClear").onclick=async()=>{
+  if(!confirm("휴대폰에 저장된 낭독 음원을 모두 삭제할까요?")) return;
+  await audioClearAll();
+  toast("저장 음원을 삭제했습니다");
+  refreshAudioStatus();
+};
+refreshAudioStatus();
+
+/* ============================================================
+   알림
+============================================================ */
+const REMIND_OPTIONS=[12+40/60, 22, 22.5, 23];  // 오후 12:40, 10시, 10시 30분, 11시
+function hourLabel(h){
+  const hh=Math.floor(h), mm=Math.round((h%1)*60);
+  const ampm=hh<12?"오전":"오후";
+  const h12=hh%12===0?12:hh%12;
+  return `${ampm} ${h12}시${mm?` ${mm}분`:""}`;
+}
+function getReminderHours(){
+  const s=store.settings;
+  let arr=Array.isArray(s.reminderHours)?s.reminderHours:[];
+  arr=arr.filter(h=>REMIND_OPTIONS.includes(h));   // 선택지에 없는 이전 값 제거
+  return arr.length?arr:REMIND_OPTIONS.slice();    // 기본: 전체 선택
+}
+function setReminderHours(arr){
+  const s=store.settings; s.reminderHours=arr; delete s.reminderHour; store.settings=s;
+}
+function renderTimeChips(){
+  const wrap=$("timeChips");
+  wrap.innerHTML="";
+  const sel=getReminderHours();
+  REMIND_OPTIONS.forEach(h=>{
+    const b=document.createElement("button");
+    b.className="time-chip"+(sel.includes(h)?" on":"");
+    b.textContent=hourLabel(h);
+    b.onclick=()=>{
+      let cur=getReminderHours();
+      if(cur.includes(h)){
+        if(cur.length===1){ toast("알림 시간은 최소 1개 필요합니다"); return; }
+        cur=cur.filter(x=>x!==h);
+      } else {
+        cur=[...cur,h].sort((a,b)=>a-b);
+      }
+      setReminderHours(cur);
+      renderTimeChips();
+      syncToSW(); scheduleInPageReminder();
+      toast("알림 시간: "+cur.map(hourLabel).join(", "));
+    };
+    wrap.appendChild(b);
+  });
+}
+renderTimeChips();
+
+/* ---- 통독 일정 설정 UI ---- */
+function renderPlanUI(){
+  const p=getPlan();
+  $("planStart").value=p.start;
+  $("planEnd").value=p.end;
+  $("planMid").value=p.mid || (PHASE_INFO?PHASE_INFO.midKey:"");
+  $("planMidLabel").textContent=(p.order==="ot"?"구약":"신약")+" 만료일";
+  document.querySelectorAll("#planOrder .time-chip").forEach(b=>b.classList.toggle("on",b.dataset.v===p.order));
+  document.querySelectorAll("#planDays .time-chip").forEach(b=>b.classList.toggle("on",!!p[b.dataset.v]));
+  if(PHASE_INFO){
+    $("planSummary").innerHTML=
+      `현재 일정: ${PHASE_INFO.firstName} ${PHASE_INFO.firstDays}일 → ${PHASE_INFO.secondName} ${PHASE_INFO.secondDays}일 · 총 읽는 날 ${SCHEDULE.length}일<br>`+
+      `하루 평균 약 ${Math.round(TOTAL_CHARS/SCHEDULE.length).toLocaleString()}자`;
+  } else {
+    $("planSummary").textContent="⚠ 기간이 너무 짧습니다. 날짜를 다시 설정해 주세요.";
+  }
+  $("holKey").value=store.settings.holKey||"";
+  const yrs=Object.keys(holCache());
+  $("holStatus").textContent = "공휴일 보유: 2026~2027 (내장)"+(yrs.length?` + ${yrs.join(", ")} (자동 갱신됨)`:"");
+}
+$("holKey").onchange=()=>{
+  const s=store.settings; s.holKey=$("holKey").value.trim(); store.settings=s;
+  toast("공휴일 API 키를 저장했습니다");
+};
+$("btnHolRefresh").onclick=async()=>{
+  const key=(store.settings.holKey||$("holKey").value||"").trim();
+  if(!key){ toast("먼저 API 키를 입력하세요"); return; }
+  const s=store.settings; s.holKey=key; store.settings=s;
+  const p=getPlan();
+  try{
+    // 캐시를 비우고 일정 범위 전체를 다시 받아옴 (임시공휴일 반영)
+    saveHolCache({});
+    const hr=await ensureHolidays(p.start,p.end);
+    refreshHolidayMerge();
+    rebuildSchedule(); render(); renderPlanUI();
+    toast(hr.fetched ? `${hr.fetched.join(", ")}년 공휴일을 갱신했습니다` : "내장 연도만 필요해 갱신할 것이 없습니다");
+  }catch(e){
+    toast("갱신 실패: 키와 Calendar API 사용 설정을 확인하세요");
+  }
+};
+document.querySelectorAll("#planOrder .time-chip").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("#planOrder .time-chip").forEach(x=>x.classList.toggle("on",x===b));
+    $("planMidLabel").textContent=(b.dataset.v==="ot"?"구약":"신약")+" 만료일";
+    $("planMid").value="";   // 순서가 바뀌면 자동 배분으로 초기화
+  };
+});
+document.querySelectorAll("#planDays .time-chip").forEach(b=>{
+  b.onclick=()=>b.classList.toggle("on");
+});
+$("planMidAuto").onclick=()=>{ $("planMid").value=""; toast("적용 시 글자수 비례로 자동 배분됩니다"); };
+$("planApply").onclick=async()=>{
+  const p=getPlan();
+  const ns=$("planStart").value, ne=$("planEnd").value, nm=$("planMid").value;
+  if(!ns||!ne){ toast("시작일과 최종 만료일을 입력하세요"); return; }
+  if(ns>=ne){ toast("최종 만료일은 시작일 이후여야 합니다"); return; }
+  if(nm && (nm<ns || nm>=ne)){ toast("중간 만료일은 시작일과 최종 만료일 사이여야 합니다"); return; }
+  // 일정 범위에 필요한 공휴일 확보 (2028년 이후)
+  try{
+    const hr=await ensureHolidays(ns,ne);
+    if(!hr.ok){
+      toast(`⚠ ${hr.missing.join(", ")}년 공휴일 정보가 없습니다. API 키를 입력하거나 공휴일 제외를 해제하세요`);
+    } else if(hr.fetched){
+      toast(`${hr.fetched.join(", ")}년 공휴일을 가져왔습니다`);
+    }
+  }catch(e){
+    toast("공휴일 정보를 가져오지 못했습니다. 키와 인터넷 연결을 확인하세요");
+  }
+  p.start=ns; p.end=ne; p.mid=nm||"";
+  p.order=document.querySelector("#planOrder .time-chip.on")?.dataset.v || "ot";
+  ["sat","sun","hol"].forEach(k=>{
+    p[k]=document.querySelector(`#planDays .time-chip[data-v=${k}]`).classList.contains("on");
+  });
+  const prev=getPlan();
+  savePlan(p);
+  if(!rebuildSchedule()){
+    savePlan(prev); rebuildSchedule();   // 이전 일정으로 복원
+    toast("⚠ 읽는 날이 부족합니다. 기간이나 포함할 날을 조정하세요");
+    renderPlanUI(); return;
+  }
+  viewIndex=todayIndex();
+  render(); renderPlanUI(); syncToSW(); scheduleInPageReminder();
+  toast("일정이 적용되었습니다");
+};
+renderPlanUI();
+
+function notiState(){
+  if(!("Notification" in window)) return "unsupported";
+  return Notification.permission;
+}
+function renderNotiStatus(){
+  const el=$("notiStatus");
+  const st=notiState();
+  if(st==="unsupported"){ el.textContent="이 브라우저는 알림을 지원하지 않습니다"; el.className="noti-status off"; }
+  else if(st==="granted"){ el.textContent="✓ 알림이 켜져 있습니다"; el.className="noti-status on"; $("btnNotiPerm").disabled=true; $("btnNotiPerm").textContent="허용됨"; }
+  else if(st==="denied"){ el.textContent="알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요"; el.className="noti-status off"; }
+  else { el.textContent="알림을 받으려면 권한을 허용해 주세요"; el.className="noti-status off"; }
+}
+$("btnNotiPerm").onclick=async()=>{
+  const p=await Notification.requestPermission();
+  renderNotiStatus();
+  if(p==="granted"){ toast("알림이 켜졌습니다"); syncToSW(); registerPeriodicSync(); }
+};
+$("btnNotiTest").onclick=async()=>{
+  if(notiState()!=="granted"){ toast("먼저 알림 권한을 허용해 주세요"); return; }
+  toast("⏱ 5초 후 알림이 옵니다 — 홈 화면으로 나가세요!");
+  const reg=await navigator.serviceWorker.ready;
+  setTimeout(()=>{
+    reg.showNotification("📖 말씀의 여정",{
+      body:"알림이 정상 작동합니다. 오늘도 말씀과 함께!",
+      icon:"icon-192.png", badge:"badge-96.png", tag:"btr-test",
+      renotify:true, vibrate:[100,50,100], requireInteraction:true
+    });
+  },5000);
+};
+
+// 페이지가 열려있는 동안의 알림 예약
+let reminderTimer=null;
+function nextReminderTime(){
+  const hours=getReminderHours();
+  const now=new Date();
+  // 오늘 남은 가장 이른 시각, 없으면 내일 첫 시각
+  for(const h of hours){
+    const t=new Date(now); t.setHours(Math.floor(h),Math.round((h%1)*60),0,0);
+    if(t>now) return t;
+  }
+  const h=hours[0];
+  const t=new Date(now); t.setDate(t.getDate()+1); t.setHours(Math.floor(h),Math.round((h%1)*60),0,0);
+  return t;
+}
+function scheduleInPageReminder(){
+  clearTimeout(reminderTimer);
+  if(notiState()!=="granted") return;
+  const t=nextReminderTime();
+  const now=new Date();
+  reminderTimer=setTimeout(async()=>{
+    if(!isTodayRest()){
+      const ti=todayIndex();
+      const sch=SCHEDULE[ti];
+      if(dateKey(todayDate())===sch.key && !dayDone(sch)){
+        const left=sch.chapters.length-dayReadCount(sch);
+        const reg=await navigator.serviceWorker.ready;
+        reg.showNotification("📖 오늘 말씀, 아직 남았어요",{
+          body:`오늘 분량 ${left}장이 남았습니다 · ${rangeLabel(sch)}`,
+          icon:"icon-192.png", badge:"badge-96.png", tag:"btr-reminder",
+          renotify:true, vibrate:[100,50,100], requireInteraction:true
+        });
+      }
+    }
+    scheduleInPageReminder();
+  }, t-now);
+}
+
+// SW와 상태 동기화 (백그라운드 알림용)
+async function syncToSW(){
+  if(!navigator.serviceWorker.controller) return;
+  const ti=todayIndex();
+  const sch=SCHEDULE[ti];
+  navigator.serviceWorker.controller.postMessage({
+    type:"STATE",
+    todayKey:sch.key,
+    done:dayDone(sch),
+    left:sch.chapters.length-dayReadCount(sch),
+    range:rangeLabel(sch),
+    reminderHours:getReminderHours()
+  });
+}
+async function registerPeriodicSync(){
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    if("periodicSync" in reg){
+      const status=await navigator.permissions.query({name:"periodic-background-sync"});
+      if(status.state==="granted"){
+        await reg.periodicSync.register("btr-reminder",{minInterval:60*60*1000});
+      }
+    }
+  }catch(e){}
+}
+
+/* ============================================================
+   PWA 설치 / SW 등록
+============================================================ */
+let deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault(); deferredPrompt=e;
+  $("btnInstall").style.display="inline-block";
+});
+$("btnInstall").onclick=async()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  $("btnInstall").style.display="none";
+};
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").then(()=>{
+    syncToSW(); registerPeriodicSync();
+  });
+}
+
+// 자정 지나면 화면 갱신
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden){ render(); syncToSW(); }
+});
+
+/* ============================================================
+   시작
+============================================================ */
+render();
+renderNotiStatus();
+scheduleInPageReminder();
+</script>
+</body>
+</html>
