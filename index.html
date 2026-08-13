@@ -237,6 +237,7 @@ main{max-width:560px;margin:-34px auto 0;padding:0 14px;position:relative}
 .btn-jump-today:active{transform:scale(.96)}
 /* ---------- 성경 열람 탭 ---------- */
 body.bible-full #appHeader{display:none}
+body.bible-full main{margin-top:0}
 .b-top{
   position:sticky;top:0;z-index:40;background:var(--bg);
   display:flex;align-items:center;gap:8px;
@@ -821,7 +822,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v23</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v24</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -2996,6 +2997,24 @@ function pickGo(v, toVerse){
     });
   }
 }
+
+// 좌우 스와이프로 장 넘기기 (세로 스크롤과 구분)
+let bSwipe=null;
+const bPage=document.getElementById("page-bible");
+bPage.addEventListener("touchstart",e=>{
+  if(!$("bPick").hidden){ bSwipe=null; return; }
+  const t=e.touches[0];
+  bSwipe={x:t.clientX, y:t.clientY, t:Date.now()};
+},{passive:true});
+bPage.addEventListener("touchend",e=>{
+  if(!bSwipe) return;
+  const t=e.changedTouches[0];
+  const dx=t.clientX-bSwipe.x, dy=t.clientY-bSwipe.y, dt=Date.now()-bSwipe.t;
+  bSwipe=null;
+  if(dt>600) return;                                 // 길게 끈 것은 무시
+  if(Math.abs(dx)<60 || Math.abs(dx)<Math.abs(dy)*1.8) return;  // 세로 스크롤과 구분
+  bMove(dx<0 ? 1 : -1);                              // 왼쪽으로 밀면 다음 장
+},{passive:true});
 
 // 탭 진입 시 초기화
 document.querySelectorAll('.tab-btn[data-tab="bible"]').forEach(b=>{
