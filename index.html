@@ -286,6 +286,9 @@ body.bible-full main{margin-top:0}
   word-break:keep-all;
 }
 .bp-grid button:active{background:var(--gold-soft)}
+.bp-grid button.here{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:700}
+.bp-quick{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 12px 14px;margin-bottom:6px}
+.bp-quick .bp-sec{margin-top:0}
 /* ---------- 검색 탭 ---------- */
 .srch-tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px;background:var(--card)}
 .srch-tabs button{
@@ -847,7 +850,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v27</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v28</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -2984,8 +2987,18 @@ function renderPick(){
   crumb.querySelectorAll("button").forEach(b=>b.onclick=()=>{ bpick.step=b.dataset.s; renderPick(); });
 
   if(bpick.step==="book"){
+    const curN=bChapters(bpos.bid);
+    const quick=`<div class="bp-quick">
+      <div class="bp-sec">⚡ ${bBookName(bpos.bid)} — 장을 누르면 바로 이동</div>
+      <div class="bp-grid num">`+
+      Array.from({length:curN},(_,i)=>`<button data-qch="${i+1}"${i+1===bpos.ch?' class="here"':''}>${i+1}</button>`).join("")+
+      `</div></div>`;
     const grid=list=>`<div class="bp-grid">`+list.map(b=>`<button data-bid="${b[1]}">${b[0]}</button>`).join("")+`</div>`;
-    body.innerHTML=`<div class="bp-sec">구약</div>${grid(BIBLE.ot)}<div class="bp-sec">신약</div>${grid(BIBLE.nt)}`;
+    body.innerHTML=quick+`<div class="bp-sec">다른 성경 선택 — 구약</div>${grid(BIBLE.ot)}<div class="bp-sec">신약</div>${grid(BIBLE.nt)}`;
+    body.querySelectorAll("button[data-qch]").forEach(b=>b.onclick=()=>{
+      bpick.bid=bpos.bid; bpick.ch=+b.dataset.qch;
+      pickGo(1,false);
+    });
     body.querySelectorAll("button[data-bid]").forEach(b=>b.onclick=()=>{
       bpick.bid=b.dataset.bid; bpick.step="ch"; renderPick();
     });
