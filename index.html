@@ -913,7 +913,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v32</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v33</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -2031,13 +2031,14 @@ function loadSummaries(){
       const r=await fetch("summaries.json");
       SUMM=r.ok?await r.json():{};
     }catch(e){ SUMM={}; }
-    updateInfoBtn();
-    if(typeof bUpdateInfoBtn==="function" && bInited) bUpdateInfoBtn();
+    try{ updateInfoBtn(); }catch(e){}
+    try{ if(typeof bUpdateInfoBtn==="function" && bInited) bUpdateInfoBtn(); }catch(e){}
   })();
   return summLoading;
 }
 function chapterSummary(){
   const c=readerChapter();
+  if(!c) return null;                       // 읽기창 미사용 상태 보호
   const ch=String(c.ch);
   return (SUMM_UP && SUMM_UP[c.id] && SUMM_UP[c.id][ch])
       || (SUMM && SUMM[c.id] && SUMM[c.id][ch]) || null;
@@ -2088,7 +2089,7 @@ function renderInfoView(){
   body.scrollTop=0;
 }
 
-function readerChapter(){ return reader.queue[reader.qi]; }
+function readerChapter(){ return (reader.queue && reader.queue[reader.qi]) || null; }
 function readerVerses(){
   const c=readerChapter();
   return (KRV[c.id] && KRV[c.id][String(c.ch)]) || [];
@@ -2944,10 +2945,10 @@ async function initBible(){
   if(bInited){ renderBibleChapter(false); return; }
   bInited=true;
   try{ await loadKRV(); }catch(e){ $("bBody").innerHTML='<div class="rd-info"><div class="ri-empty">성경 본문을 불러오지 못했습니다.<br>인터넷 연결 후 다시 시도하세요.</div></div>'; bInited=false; return; }
-  await versLoad();
-  await loadSummaries();
+  try{ await versLoad(); }catch(e){ console.error("versLoad", e); }
+  try{ await loadSummaries(); }catch(e){ console.error("summaries", e); }
   try{ MATTS=(await kvGet("memoatts"))||{}; }catch(e){ MATTS={}; }
-  buildBVer();
+  try{ buildBVer(); }catch(e){ console.error("buildBVer", e); }
   renderBibleChapter(false);
 }
 function bSelVer(){
