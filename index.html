@@ -893,7 +893,10 @@ nav.tabbar{
         <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
           <button class="btn-outline" id="btnExport">기록 내보내기</button>
           <button class="btn-outline" id="btnImportRec">기록 가져오기</button>
+          <button class="btn-outline" id="btnMemoExport">메모 백업(첨부 포함)</button>
+          <button class="btn-outline" id="btnMemoImport">메모 복원</button>
           <input type="file" id="fileRec" accept=".json,application/json" hidden>
+          <input type="file" id="fileMemo" accept=".zip,application/zip" hidden>
         </div>
       </div>
       <div class="set-row">
@@ -909,7 +912,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v30</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v31</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -2028,6 +2031,7 @@ function loadSummaries(){
       SUMM=r.ok?await r.json():{};
     }catch(e){ SUMM={}; }
     updateInfoBtn();
+    if(typeof bUpdateInfoBtn==="function" && bInited) bUpdateInfoBtn();
   })();
   return summLoading;
 }
@@ -2926,7 +2930,7 @@ async function initBible(){
   bInited=true;
   try{ await loadKRV(); }catch(e){ $("bBody").innerHTML='<div class="rd-info"><div class="ri-empty">성경 본문을 불러오지 못했습니다.<br>인터넷 연결 후 다시 시도하세요.</div></div>'; bInited=false; return; }
   await versLoad();
-  loadSummaries();
+  await loadSummaries();
   try{ MATTS=(await kvGet("memoatts"))||{}; }catch(e){ MATTS={}; }
   buildBVer();
   renderBibleChapter(false);
@@ -3250,6 +3254,121 @@ $("mAtts").addEventListener("click",async e=>{
     setTimeout(()=>URL.revokeObjectURL(url),10000);
   }
 });
+
+/* ---- ZIP 생성 (무압축, 백업용) ---- */
+const CRC_TABLE=(()=>{
+  const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){
+    let c=n;
+    for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+    t[n]=c>>>0;
+  }
+  return t;
+})();
+function crc32(u8){
+  let c=0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c=CRC_TABLE[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+async function buildZip(entries){   // entries: [{name, blob}]
+  const enc=new TextEncoder();
+  const parts=[], central=[];
+  let offset=0;
+  for(const ent of entries){
+    const nameU8=enc.encode(ent.name);
+    const data=new Uint8Array(await ent.blob.arrayBuffer());
+    const crc=crc32(data);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true);
+    lh.setUint16(8,0,true);                       // method 0 (무압축)
+    lh.setUint32(14,crc,true);
+    lh.setUint32(18,data.length,true); lh.setUint32(22,data.length,true);
+    lh.setUint16(26,nameU8.length,true);
+    parts.push(new Uint8Array(lh.buffer), nameU8, data);
+    central.push({nameU8, crc, size:data.length, offset});
+    offset+=30+nameU8.length+data.length;
+  }
+  const cdStart=offset;
+  for(const c of central){
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true);
+    ch.setUint16(10,0,true);
+    ch.setUint32(16,c.crc,true);
+    ch.setUint32(20,c.size,true); ch.setUint32(24,c.size,true);
+    ch.setUint16(28,c.nameU8.length,true);
+    ch.setUint32(42,c.offset,true);
+    parts.push(new Uint8Array(ch.buffer), c.nameU8);
+    offset+=46+c.nameU8.length;
+  }
+  const eocd=new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0,0x06054b50,true);
+  eocd.setUint16(8,central.length,true); eocd.setUint16(10,central.length,true);
+  eocd.setUint32(12,offset-cdStart,true); eocd.setUint32(16,cdStart,true);
+  parts.push(new Uint8Array(eocd.buffer));
+  return new Blob(parts,{type:"application/zip"});
+}
+
+/* ---- 메모 백업 / 복원 ---- */
+$("btnMemoExport").onclick=async()=>{
+  try{
+    if(!Object.keys(MATTS).length){
+      try{ MATTS=(await kvGet("memoatts"))||{}; }catch(e){}
+    }
+    toast("메모 백업 파일 생성 중...");
+    const entries=[{name:"memo.json", blob:new Blob([JSON.stringify({memo:memos(), atts:MATTS})],{type:"application/json"})}];
+    for(const k of Object.keys(MATTS)){
+      for(const a of MATTS[k]){
+        const blob=await kvGet("memoatt:"+k+":"+a.id);
+        if(blob) entries.push({name:`att/${k}/${a.id}`, blob});
+      }
+    }
+    const zip=await buildZip(entries);
+    const url=URL.createObjectURL(zip);
+    const el=document.createElement("a");
+    el.href=url; el.download="말씀통독_메모백업_"+dateKey(new Date())+".zip"; el.click();
+    setTimeout(()=>URL.revokeObjectURL(url),10000);
+    toast(`✓ 백업 완료 (첨부 ${entries.length-1}개 포함)`);
+  }catch(e){ toast("백업 실패: "+(e.message||e)); }
+};
+$("btnMemoImport").onclick=()=>$("fileMemo").click();
+$("fileMemo").onchange=async e=>{
+  const files=Array.from(e.target.files||[]);
+  e.target.value="";
+  if(!files.length) return;
+  const f=files[0];
+  try{
+    toast("메모 복원 중...");
+    const ents=await zipEntries(f);
+    const metaEnt=ents.find(x=>x.name==="memo.json");
+    if(!metaEnt) throw new Error("memo.json 없음");
+    const meta=JSON.parse(await (await zipEntryBlob(f, metaEnt)).text());
+    // 텍스트 병합 (최신 승리)
+    const cur=memos();
+    for(const k of Object.keys(meta.memo||{})){
+      if(((meta.memo[k]&&meta.memo[k].ts)||0) > ((cur[k]&&cur[k].ts)||0)) cur[k]=meta.memo[k];
+    }
+    memoWrite(cur);
+    // 첨부 복원 (id 기준 합침)
+    try{ MATTS=(await kvGet("memoatts"))||{}; }catch(err){ MATTS=MATTS||{}; }
+    let n=0;
+    for(const ent of ents){
+      const m=ent.name.match(/^att\/([^/]+)\/(.+)$/);
+      if(!m) continue;
+      const k=m[1], id=m[2];
+      const metaList=(meta.atts&&meta.atts[k])||[];
+      const am=metaList.find(x=>x.id===id);
+      if(!am) continue;
+      const blob=await zipEntryBlob(f, ent);
+      await kvPut("memoatt:"+k+":"+id, new Blob([await blob.arrayBuffer()],{type:am.type||"application/octet-stream"}));
+      MATTS[k]=MATTS[k]||[];
+      if(!MATTS[k].some(x=>x.id===id)) MATTS[k].push(am);
+      n++;
+    }
+    await kvPut("memoatts", MATTS);
+    toast(`✓ 메모 복원 완료 (첨부 ${n}개)`);
+    if(bInited) renderBibleChapter(true);
+  }catch(err){ toast("복원 실패: "+(err.message||err)); }
+};
 
 /* ---- 책갈피 (최대 3개) ---- */
 function bmks(){ try{ return JSON.parse(localStorage.getItem("btr2-bmk"))||[]; }catch(e){ return []; } }
