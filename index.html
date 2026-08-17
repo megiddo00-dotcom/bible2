@@ -844,6 +844,7 @@ nav.tabbar{
             <div class="set-desc">장별 분석 JSON 파일을 가져오면 읽기 화면 [📖 개요]에서 전체 화면 분석으로 볼 수 있습니다. 여러 파일을 올리면 장 단위로 누적·갱신됩니다.</div>
             <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
               <button class="btn-outline" id="btnSummImport">분석 가져오기</button>
+              <button class="btn-outline" id="btnSummExport">분석 내보내기</button>
               <button class="btn-outline" id="btnSummClear" style="color:var(--danger)">삭제</button>
             </div>
             <div class="set-desc" id="summStatus" style="margin-top:8px"></div>
@@ -912,7 +913,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v31</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v32</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -2565,6 +2566,20 @@ $("fileSumm").onchange=async e=>{
     refreshSummStatus();
     if(reader.open) renderReaderChapter();
   }catch(err){ toast("분석 저장 중 오류가 발생했습니다"); }
+};
+$("btnSummExport").onclick=async()=>{
+  try{
+    const d=await kvGet("summ");
+    let n=0; if(d) Object.values(d).forEach(b=>{ n+=Object.keys(b).length; });
+    if(!n){ toast("내보낼 분석이 없습니다 (가져온 분석 기준)"); return; }
+    const blob=new Blob([JSON.stringify(d)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="장분석_전체백업_"+dateKey(new Date())+".json";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    toast(`✓ ${n}개 장 분석을 내보냈습니다 — 이 파일이 최신 전체본입니다`);
+  }catch(e){ toast("내보내기 실패"); }
 };
 $("btnSummClear").onclick=async()=>{
   if(!confirm("가져온 장 분석을 모두 삭제할까요? (앱 기본 요약은 유지)")) return;
