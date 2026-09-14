@@ -913,7 +913,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v34</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v35</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -3678,6 +3678,8 @@ function mergeRemote(remote){
       localStorage.setItem("btr2-plan", JSON.stringify(remote.plan));   // 원본 _ts 보존
       rebuildSchedule();
       viewIndex=todayIndex();
+      const od=remote.plan.order==="nt"?"신약 먼저":"구약 먼저";
+      toast(`📅 다른 기기의 일정을 반영했습니다 (${remote.plan.start} 시작 · ${od})`);
     }
     if(Array.isArray(remote.badges)){
       let cur=[]; try{cur=JSON.parse(localStorage.getItem("btr2-badges")||"[]")}catch(e){}
@@ -3699,10 +3701,10 @@ async function findOrCreateGist(){
   s.gistId=created.id; store.settings=s;
   return created;
 }
-let syncing=false;
+let syncing=false, syncQueued=false;
 async function syncNow(silent){
   if(!ghToken()){ if(!silent) toast("먼저 GitHub 토큰을 입력하세요"); return; }
-  if(syncing) return;
+  if(syncing){ syncQueued=true; return; }   // 진행 중이면 끝난 뒤 한 번 더
   syncing=true;
   const st=$("syncStatus");
   try{
@@ -3730,7 +3732,10 @@ async function syncNow(silent){
   }catch(e){
     if(st) st.textContent="동기화 실패: 토큰 권한(gist)과 인터넷 연결을 확인하세요";
     if(!silent) toast("동기화 실패");
-  }finally{ syncing=false; }
+  }finally{
+    syncing=false;
+    if(syncQueued){ syncQueued=false; syncNow(true); }
+  }
 }
 let syncPushTimer=null;
 function scheduleSyncPush(){
@@ -3743,7 +3748,10 @@ function renderSyncStatus(){
   if(!st) return;
   if(!ghToken()){ st.textContent="토큰을 입력하면 자동 동기화가 켜집니다."; return; }
   const t=store.settings.lastSync;
-  st.textContent="✓ 연결됨"+(t?` · 마지막 동기화 ${new Date(t).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}`:"");
+  const pts=getPlan()._ts;
+  const fmt=x=>new Date(x).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+  st.textContent="✓ 연결됨"+(t?` · 마지막 동기화 ${fmt(t)}`:"")
+    +(pts?` · 일정: ${fmt(pts)} 적용본`:" · 일정: 기본값");
 }
 $("ghToken").value=ghToken();
 $("ghToken").onchange=()=>{
