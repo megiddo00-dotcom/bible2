@@ -259,6 +259,16 @@ body.bible-full main{margin-top:0}
   padding:6px 6px 6px 12px;font-size:.82rem;font-weight:700;color:#7A5E1A;
   cursor:pointer;font-family:var(--sans);
 }
+.sec-ttl{
+  font-family:var(--serif);font-weight:700;font-size:.92rem;color:#8A66A0;
+  margin:20px 0 8px;padding-left:2px;
+}
+.sec-ttl::before{content:"◎ ";font-size:.8rem}
+.rd-verse .nj{color:#C2588B;font-weight:700;font-size:.68rem;margin-right:1px}
+.nj-g{
+  display:inline-block;color:#B0507F;font-size:.78rem;margin-left:6px;
+  background:#FBEFF4;border-radius:8px;padding:1px 8px;vertical-align:1px;
+}
 .b-body .vn{
   display:inline-block;min-width:22px;padding:1px 4px;margin-right:4px;
   border-radius:8px;cursor:pointer;text-align:center;
@@ -858,6 +868,13 @@ nav.tabbar{
           </div>
           <button class="time-chip" id="keepAwakeBtn" style="flex-shrink:0">켜짐</button>
         </div>
+        <div class="set-row">
+          <div>
+            <div class="set-title">◎ 단락 제목·난외주 표시</div>
+            <div class="set-desc">이야기 단락 제목(〔천지 창조〕)과 난외주(①얻음)를 본문에 함께 표시합니다. 검색·낭독·기록에는 포함되지 않습니다.</div>
+          </div>
+          <button class="time-chip" id="njBtn" style="flex-shrink:0">켜짐</button>
+        </div>
       </div>
     </div>
     <div class="sec-title">🏆 나의 기록</div>
@@ -913,7 +930,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v36</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v37</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -1917,6 +1934,40 @@ function loadKRV(){
   return krvLoading;
 }
 
+/* ---- 단락 제목·난외주 (본문과 분리된 오버레이, 검색·낭독 제외) ---- */
+let NOTES=null, notesLoading=null;
+function loadNotes(){
+  if(NOTES || notesLoading) return notesLoading || Promise.resolve(NOTES);
+  notesLoading=fetch("notes.json").then(r=>r.ok?r.json():{}).then(j=>{ NOTES=j||{}; }).catch(()=>{ NOTES={}; });
+  return notesLoading;
+}
+function njOn(){ return store.settings.njOn !== false; }   // 기본: 표시
+function verseNote(bid,ch,v){
+  if(!njOn() || !NOTES) return null;
+  const c=NOTES[bid] && NOTES[bid][String(ch)];
+  if(!c) return null;
+  return {
+    title: c.t && c.t[String(v)] || null,
+    n: c.n && c.n[String(v)] || null
+  };
+}
+function decorateVerse(text, note){   // 앵커 표기 + 끝 풀이 부착
+  if(!note || !note.n) return text;
+  let out="", cursor=0, src=text;
+  for(const [sym, w] of note.n.a){
+    if(!w){ continue; }
+    const idx=src.indexOf(w, cursor);
+    if(idx<0) continue;
+    out+=src.slice(cursor, idx)+`<sup class="nj">${sym}</sup>`+w;
+    cursor=idx+w.length;
+  }
+  out+=src.slice(cursor);
+  for(const [sym, g] of note.n.g){
+    out+=` <span class="nj-g">${sym?sym+" ":""}${g}</span>`;
+  }
+  return out;
+}
+
 /* ---- 대역 성경: 쉬운성경·NIV·NKJV (기기 내 저장, 공개 배포 안 함) ---- */
 const VLABEL={easy:"쉬운성경", niv:"NIV", nkjv:"NKJV"};
 let VERS={}, versChecked=false;
@@ -1965,6 +2016,18 @@ async function easyLoad(){ await versLoad(); return EASY; }
 
 const reader={ open:false, queue:[], qi:0, vi:0, playing:false, wakeLock:null, mode:null, token:0 };
 function keepAwakeOn(){ return store.settings.keepAwake !== false; }   // 기본: 켜짐
+function renderNjBtn(){
+  const on=njOn();
+  $("njBtn").textContent=on?"켜짐":"꺼짐";
+  $("njBtn").classList.toggle("on",on);
+}
+$("njBtn").onclick=()=>{
+  const s=store.settings; s.njOn=!njOn(); store.settings=s;
+  renderNjBtn();
+  if(typeof bInited!=="undefined" && bInited) renderBibleChapter(true);
+  if(reader.open && !reader.infoView) renderReaderChapter();
+};
+renderNjBtn();
 async function acquireWakeLock(){
   if(reader.wakeLock) return;
   try{
@@ -1998,6 +2061,7 @@ async function openReader(startCi){
   reader.open=true;
   if(keepAwakeOn()) acquireWakeLock();   // 설정이 켜져 있으면 읽는 동안 화면 유지
   await versLoad();
+  loadNotes().then(()=>{ if(reader.open && !reader.infoView) renderReaderChapter(); });
   buildVerSelect();
   loadSummaries();
   $("rdVoice").value=voiceGender();
@@ -2106,9 +2170,15 @@ function renderReaderChapter(){
   const vk=selVer();
   const ez = vk && VERS[vk][c.id] && VERS[vk][c.id][String(c.ch)];
   readerVerses().forEach((v,i)=>{
+    const note=verseNote(c.id, c.ch, i+1);
+    if(note && note.title){
+      const tt=document.createElement("div");
+      tt.className="sec-ttl"; tt.textContent=note.title;
+      body.appendChild(tt);
+    }
     const p=document.createElement("p");
     p.className="rd-verse"; p.id="rdv-"+i;
-    p.innerHTML=`<span class="vn">${i+1}</span>${v}`;
+    p.innerHTML=`<span class="vn">${i+1}</span>${decorateVerse(v,note)}`;
     body.appendChild(p);
     if(ez && ez[i]){
       const e=document.createElement("div");
@@ -2946,6 +3016,7 @@ async function initBible(){
   if(bInited){ renderBibleChapter(false); return; }
   bInited=true;
   try{ await loadKRV(); }catch(e){ $("bBody").innerHTML='<div class="rd-info"><div class="ri-empty">성경 본문을 불러오지 못했습니다.<br>인터넷 연결 후 다시 시도하세요.</div></div>'; bInited=false; return; }
+  try{ await loadNotes(); }catch(e){}
   try{ await versLoad(); }catch(e){ console.error("versLoad", e); }
   try{ await loadSummaries(); }catch(e){ console.error("summaries", e); }
   try{ MATTS=(await kvGet("memoatts"))||{}; }catch(e){ MATTS={}; }
@@ -3016,7 +3087,9 @@ function renderBibleChapter(keepScroll){
     let h="";
     for(let i=0;i<arr.length;i++){
       const hasM=memoHas(memoKey(bpos.bid,bpos.ch,i+1));
-      h+=`<p class="rd-verse" id="bv-${i}"><span class="vn${hasM?' has-memo':''}">${i+1}</span>${arr[i]}</p>`;
+      const note=verseNote(bpos.bid,bpos.ch,i+1);
+      if(note && note.title) h+=`<div class="sec-ttl">${note.title}</div>`;
+      h+=`<p class="rd-verse" id="bv-${i}"><span class="vn${hasM?' has-memo':''}">${i+1}</span>${decorateVerse(arr[i],note)}</p>`;
       if(ez && ez[i]) h+=`<div class="rd-easy" data-v="${i}"><span class="etag">${VLABEL[vk]}</span>${ez[i]}</div>`;
     }
     body.innerHTML=h || '<div class="rd-info"><div class="ri-empty">본문이 없습니다.</div></div>';
