@@ -264,6 +264,7 @@ body.bible-full main{margin-top:0}
   margin:20px 0 8px;padding-left:2px;
 }
 .sec-ttl::before{content:"◎ ";font-size:.8rem}
+.sec-ref{font-family:var(--sans);font-weight:400;font-size:.72rem;color:#C48AA9;margin-left:7px;letter-spacing:0}
 .rd-verse .nj{color:#C2588B;font-weight:700;font-size:.68rem;margin-right:1px}
 .nj-gs{display:block;margin:5px 0 2px 22px}
 .nj-gs[hidden]{display:none}
@@ -932,7 +933,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v38</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v39</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -1950,8 +1951,14 @@ function verseNote(bid,ch,v){
   if(!c) return null;
   return {
     title: c.t && c.t[String(v)] || null,
+    ref: c.r && c.r[String(v)] || null,
     n: c.n && c.n[String(v)] || null
   };
+}
+function secTitleHtml(note){
+  if(!note || !note.title) return "";
+  return `<div class="sec-ttl">${escHtml(note.title)}`+
+         (note.ref?`<span class="sec-ref">〔${escHtml(note.ref)}〕</span>`:"")+`</div>`;
 }
 function decorateVerse(text, note){   // 앵커 표기 + 끝 풀이 부착
   if(!note || !note.n) return text;
@@ -1966,7 +1973,7 @@ function decorateVerse(text, note){   // 앵커 표기 + 끝 풀이 부착
   out+=src.slice(cursor);
   if(note.n.g && note.n.g.length){
     out+=`<span class="nj-gs" hidden>`+
-      note.n.g.map(([sym,g])=>`<span class="nj-g">${sym?sym+" ":""}${g}</span>`).join(" ")+
+      note.n.g.map(([sym,g])=>`<span class="nj-g">${escHtml(sym?sym+" ":"")}${escHtml(g)}</span>`).join(" ")+
       `</span>`;
   }
   return out;
@@ -2177,8 +2184,10 @@ function renderReaderChapter(){
     const note=verseNote(c.id, c.ch, i+1);
     if(note && note.title){
       const tt=document.createElement("div");
-      tt.className="sec-ttl"; tt.textContent=note.title;
-      body.appendChild(tt);
+      tt.outerHTML;                     // (자리표시)
+      const wrap=document.createElement("div");
+      wrap.innerHTML=secTitleHtml(note);
+      body.appendChild(wrap.firstChild);
     }
     const p=document.createElement("p");
     p.className="rd-verse"; p.id="rdv-"+i;
@@ -3091,7 +3100,7 @@ function renderBibleChapter(keepScroll){
     for(let i=0;i<arr.length;i++){
       const hasM=memoHas(memoKey(bpos.bid,bpos.ch,i+1));
       const note=verseNote(bpos.bid,bpos.ch,i+1);
-      if(note && note.title) h+=`<div class="sec-ttl">${note.title}</div>`;
+      h+=secTitleHtml(note);
       h+=`<p class="rd-verse" id="bv-${i}"><span class="vn${hasM?' has-memo':''}">${i+1}</span>${decorateVerse(arr[i],note)}</p>`;
       if(ez && ez[i]) h+=`<div class="rd-easy" data-v="${i}"><span class="etag">${VLABEL[vk]}</span>${ez[i]}</div>`;
     }
