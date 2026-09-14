@@ -265,6 +265,8 @@ body.bible-full main{margin-top:0}
 }
 .sec-ttl::before{content:"◎ ";font-size:.8rem}
 .rd-verse .nj{color:#C2588B;font-weight:700;font-size:.68rem;margin-right:1px}
+.nj-gs{display:block;margin:5px 0 2px 22px}
+.nj-gs[hidden]{display:none}
 .nj-g{
   display:inline-block;color:#B0507F;font-size:.78rem;margin-left:6px;
   background:#FBEFF4;border-radius:8px;padding:1px 8px;vertical-align:1px;
@@ -842,7 +844,7 @@ nav.tabbar{
         <input type="file" id="fileImportM" accept=".mp3,.zip,audio/mpeg,application/zip" multiple hidden>
         <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px">
           <div class="set-title">📙 대역 성경 함께 보기 (쉬운성경 · NIV · NKJV)</div>
-          <div class="set-desc">쉬운성경.json / NIV.json / NKJV.json 파일을 가져오면(여러 개 동시 선택 가능) 읽어주기 화면에서 역본을 선택해 <b>절을 누르거나 [전체] 버튼</b>으로 함께 볼 수 있습니다. 파일은 이 기기에만 저장됩니다.</div>
+          <div class="set-desc">쉬운성경.json / NIV.json / NKJV.json 파일을 가져오면(여러 개 동시 선택 가능) 읽기·성경 화면에서 역본을 선택하고 <b>[전체] 버튼</b>으로 함께 볼 수 있습니다. 파일은 이 기기에만 저장됩니다.</div>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
             <button class="btn-outline" id="btnEasyImport">대역 성경 가져오기</button>
             <button class="btn-outline" id="btnEasyClear" style="color:var(--danger)">전체 삭제</button>
@@ -871,7 +873,7 @@ nav.tabbar{
         <div class="set-row">
           <div>
             <div class="set-title">◎ 단락 제목·난외주 표시</div>
-            <div class="set-desc">이야기 단락 제목(〔천지 창조〕)과 난외주(①얻음)를 본문에 함께 표시합니다. 검색·낭독·기록에는 포함되지 않습니다.</div>
+            <div class="set-desc">이야기 단락 제목(◎ 천지 창조)과 난외주 표기(①)를 본문에 표시합니다. <b>① 표기가 있는 절을 터치하면 풀이</b>가 나타납니다. 검색·낭독·기록에는 포함되지 않습니다.</div>
           </div>
           <button class="time-chip" id="njBtn" style="flex-shrink:0">켜짐</button>
         </div>
@@ -930,7 +932,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v37</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v38</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -1962,8 +1964,10 @@ function decorateVerse(text, note){   // 앵커 표기 + 끝 풀이 부착
     cursor=idx+w.length;
   }
   out+=src.slice(cursor);
-  for(const [sym, g] of note.n.g){
-    out+=` <span class="nj-g">${sym?sym+" ":""}${g}</span>`;
+  if(note.n.g && note.n.g.length){
+    out+=`<span class="nj-gs" hidden>`+
+      note.n.g.map(([sym,g])=>`<span class="nj-g">${sym?sym+" ":""}${g}</span>`).join(" ")+
+      `</span>`;
   }
   return out;
 }
@@ -2081,8 +2085,8 @@ function buildVerSelect(){
   sel.style.display="";
   sel.innerHTML='<option value="">대역 없음</option>'+avail.map(k=>`<option value="${k}">${VLABEL[k]}</option>`).join("");
   sel.value=selVer();
-  $("rdEasyBtn").style.display = sel.value==="easy" ? "" : "none";   // 전체보기는 쉬운성경 전용
-  if(sel.value!=="easy"){ $("rdBody").classList.remove("easy-all"); $("rdEasyBtn").classList.remove("on"); }
+  $("rdEasyBtn").style.display = sel.value ? "" : "none";
+  if(!sel.value){ $("rdBody").classList.remove("easy-all"); $("rdEasyBtn").classList.remove("on"); }
 }
 
 /* ---- 장 개요·분석 데이터 (저장소 파일 + 업로드 병합, 업로드 우선) ---- */
@@ -2369,24 +2373,23 @@ $("rdVoice").onchange=()=>{
 };
 $("rdBody").addEventListener("click",e=>{
   if(reader.infoView) return;
-  const ezClicked=e.target.closest(".rd-easy");
-  if(ezClicked){ ezClicked.classList.remove("show"); return; }
+  if(e.target.closest(".rd-easy")) return;      // 대역은 [전체] 버튼으로만
   const pv=e.target.closest(".rd-verse");
   if(!pv) return;
-  const nx=pv.nextElementSibling;
-  if(nx && nx.classList.contains("rd-easy")) nx.classList.toggle("show");
+  const gs=pv.querySelector(".nj-gs");           // 절 터치 = 이 절의 난외주 풀이 표시/숨김
+  if(gs) gs.hidden=!gs.hidden;
 });
 $("rdEasyBtn").onclick=()=>{
   const on=$("rdBody").classList.toggle("easy-all");
   $("rdEasyBtn").classList.toggle("on",on);
-  toast(on ? "대역 전체 표시" : "대역 숨김 (절을 누르면 개별 표시)");
+  toast(on ? "대역 전체 표시" : "대역 숨김");
 };
 $("rdVer").onchange=()=>{
   const s=store.settings; s.verSel=$("rdVer").value; store.settings=s;
-  $("rdEasyBtn").style.display = $("rdVer").value==="easy" ? "" : "none";
-  if($("rdVer").value!=="easy"){ $("rdBody").classList.remove("easy-all"); $("rdEasyBtn").classList.remove("on"); }
+  $("rdEasyBtn").style.display = $("rdVer").value ? "" : "none";
+  if(!$("rdVer").value){ $("rdBody").classList.remove("easy-all"); $("rdEasyBtn").classList.remove("on"); }
   renderReaderChapter();
-  if($("rdVer").value) toast(VLABEL[$("rdVer").value]+" 대역으로 표시합니다");
+  if($("rdVer").value) toast(VLABEL[$("rdVer").value]+" 선택 — [전체]를 누르면 함께 표시됩니다");
 };
 
 /* ---- 화면 중앙 절 기준 장 진행률 ---- */
@@ -3046,7 +3049,7 @@ $("bVer").onchange=()=>{
   const s=store.settings; s.bVerSel=$("bVer").value; store.settings=s;
   bSyncAllBtn();
   renderBibleChapter(true);
-  if($("bVer").value) toast(VLABEL[$("bVer").value]+" — 절을 누르거나 [전체]를 누르세요");
+  if($("bVer").value) toast(VLABEL[$("bVer").value]+" 선택 — [전체]를 누르면 함께 표시됩니다");
 };
 $("bAllBtn").onclick=()=>{
   if(!bSelVer()) return;
@@ -3107,13 +3110,11 @@ $("bBody").addEventListener("click",e=>{
     const p=vn.closest(".rd-verse");
     if(p){ openMemo(+p.id.slice(3)); return; }
   }
-  const ezClicked=e.target.closest(".rd-easy");
-  if(ezClicked){ ezClicked.classList.remove("show"); return; }
+  if(e.target.closest(".rd-easy")) return;      // 대역은 [전체] 버튼으로만
   const p=e.target.closest(".rd-verse");
   if(!p) return;
-  const i=+p.id.slice(3);
-  const ez=$("bBody").querySelector(`.rd-easy[data-v="${i}"]`);
-  if(ez) ez.classList.toggle("show");
+  const gs=p.querySelector(".nj-gs");            // 절 터치 = 이 절의 난외주 풀이 표시/숨김
+  if(gs) gs.hidden=!gs.hidden;
 });
 
 // 이전/다음 장 (책 경계 넘어 이동)
