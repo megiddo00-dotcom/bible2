@@ -913,7 +913,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v35</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v36</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -3637,6 +3637,7 @@ async function gh(pathname, opts){
       ...(opts&&opts.body?{"Content-Type":"application/json"}:{}) }
   });
   if(!r.ok) throw new Error("gh "+r.status);
+  if(r.status===204) return null;      // DELETE 등 빈 응답
   return r.json();
 }
 function localPayload(){
@@ -3688,18 +3689,35 @@ function mergeRemote(remote){
 }
 async function findOrCreateGist(){
   const s=store.settings;
-  if(s.gistId){
-    try{ return await gh("/gists/"+s.gistId); }catch(e){ delete s.gistId; store.settings=s; }
-  }
+  // 항상 목록을 확인해 중복(기기별 각자 생성) 여부를 검사한다
   const list=await gh("/gists?per_page=100");
-  const found=list.find(g=>g.description===SYNC_MARK);
-  if(found){ s.gistId=found.id; store.settings=s; return await gh("/gists/"+found.id); }
-  const created=await gh("/gists",{method:"POST",body:JSON.stringify({
-    description:SYNC_MARK, public:false,
-    files:{[SYNC_FILE]:{content:JSON.stringify(localPayload())}}
-  })});
-  s.gistId=created.id; store.settings=s;
-  return created;
+  const matches=list.filter(g=>g.description===SYNC_MARK)
+                    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  if(!matches.length){
+    const created=await gh("/gists",{method:"POST",body:JSON.stringify({
+      description:SYNC_MARK, public:false,
+      files:{[SYNC_FILE]:{content:JSON.stringify(localPayload())}}
+    })});
+    s.gistId=created.id; store.settings=s;
+    return created;
+  }
+  const canonical=matches[0];                      // 가장 오래된 것 = 표준 (모든 기기가 동일 선택)
+  s.gistId=canonical.id; store.settings=s;
+  // 중복 저장소가 있으면: 내용을 흡수(병합)한 뒤 삭제해 재발 방지
+  for(const dup of matches.slice(1)){
+    try{
+      const dg=await gh("/gists/"+dup.id);
+      const f=dg.files && dg.files[SYNC_FILE];
+      if(f){
+        let content=f.content;
+        if(f.truncated) content=await (await fetch(f.raw_url)).text();
+        try{ mergeRemote(JSON.parse(content)); }catch(e){}
+      }
+      await gh("/gists/"+dup.id,{method:"DELETE"});
+    }catch(e){}
+  }
+  if(matches.length>1) toast(`중복 동기화 저장소 ${matches.length-1}개를 병합·정리했습니다`);
+  return await gh("/gists/"+canonical.id);
 }
 let syncing=false, syncQueued=false;
 async function syncNow(silent){
@@ -3750,7 +3768,8 @@ function renderSyncStatus(){
   const t=store.settings.lastSync;
   const pts=getPlan()._ts;
   const fmt=x=>new Date(x).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
-  st.textContent="✓ 연결됨"+(t?` · 마지막 동기화 ${fmt(t)}`:"")
+  const gid=(store.settings.gistId||"").slice(0,6);
+  st.textContent="✓ 연결됨"+(gid?` · 저장소 ${gid}`:"")+(t?` · 마지막 동기화 ${fmt(t)}`:"")
     +(pts?` · 일정: ${fmt(pts)} 적용본`:" · 일정: 기본값");
 }
 $("ghToken").value=ghToken();
