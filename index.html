@@ -420,6 +420,14 @@ body.bible-full main{margin-top:0}
 .record-stat b{font-family:var(--serif);font-size:1.08rem;display:block}
 .record-stat span{font-size:.7rem;color:var(--ink-soft)}
 .badge-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.badge-chip.toggle{cursor:pointer;border-style:dashed}
+.badge-chip.toggle .arr{font-size:.65rem;margin-left:3px;color:var(--ink-soft)}
+.badge-books{display:none;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);width:100%}
+.badge-books.open{display:flex}
+.badge-books span{
+  font-size:.75rem;border:1px solid var(--line);background:var(--card);
+  border-radius:10px;padding:4px 9px;color:var(--ink-soft);
+}
 .badge-chip{
   display:inline-flex;align-items:center;gap:5px;
   background:var(--gold-soft);border:1px solid #E6D5A8;color:#7A5E1A;
@@ -933,7 +941,7 @@ nav.tabbar{
       · 위의 일정 설정에서 기간·순서·포함할 날을 바꾸면 전체 일정이 자동으로 다시 짜집니다.<br>
       · 하루 분량은 <b>개역한글판 각 장의 글자수</b>를 기준으로 균등하게 나누며, 성경 전체 1,189장을 다룹니다.<br>
       · 공휴일 데이터는 2026~2027년 기준입니다.<br>
-      · <b>앱 버전: 통독 v39</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
+      · <b>앱 버전: 통독 v40</b> — 음원 ZIP 가져오기 지원 버전입니다.<br>
       · 읽기 기록은 기본적으로 이 기기에 저장되며, 동기화를 켜면 본인 GitHub 비공개 Gist를 통해 다른 기기와 공유됩니다.
     </div>
   </section>
@@ -1833,12 +1841,27 @@ function renderRecords(badges){
   grid.innerHTML="";
   const earned=badges.filter(b=>b.earned && !b.id.startsWith("book-"));
   const earnedBooks=bookBadges.filter(b=>b.earned);
-  [...earned, ...earnedBooks.slice(-8)].forEach(b=>{
+  earned.forEach(b=>{
     const chip=document.createElement("span");
     chip.className="badge-chip";
     chip.textContent=b.icon+" "+b.name;
     grid.appendChild(chip);
   });
+  if(earnedBooks.length){
+    // 책 완독은 권수만큼 나열하지 않고 요약 칩 하나로 (탭하면 목록 펼침)
+    const sum=document.createElement("span");
+    sum.className="badge-chip toggle";
+    sum.innerHTML=`📖 완독한 책 ${earnedBooks.length}권<span class="arr">▾</span>`;
+    grid.appendChild(sum);
+    const list=document.createElement("div");
+    list.className="badge-books";
+    list.innerHTML=earnedBooks.map(b=>`<span>${b.name.replace(" 완독","")}</span>`).join("");
+    grid.appendChild(list);
+    sum.onclick=()=>{
+      const open=list.classList.toggle("open");
+      sum.querySelector(".arr").textContent=open?"▴":"▾";
+    };
+  }
   if(!grid.children.length){
     grid.innerHTML='<span class="set-desc">첫 배지를 향해 읽어보세요! 책 한 권을 완독하면 배지를 받아요 📖</span>';
   }
